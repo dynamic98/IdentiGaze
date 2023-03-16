@@ -21,13 +21,13 @@ class PreattentiveObject:
         size_list = [30, 40, 50, 60, 70]
         color_task = ['hue', 'brightness']
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
+        shape_list = [1,2,3,4,5]
         if self.random_control==True:
             element_size = random.choice(size_list)
             color = self.convert_color(random.choice(color_task), random.choice(color_level))
         else:
             element_size = 50
             color = (255,255,255)
-        shape_list = ['circle', 'square', 'triangle', 'cross']
         shape_distractor = random.choice(shape_list)
         shape_list.remove(shape_distractor)
         shape_target = random.choice(shape_list)
@@ -37,11 +37,11 @@ class PreattentiveObject:
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_draw(shape_target, bg, i[0], i[1], element_size, color)
+                bg = self.shape_cross_draw(shape_target, bg, i[0], i[1], element_size, color)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg= self.shape_draw(shape_distractor, bg, i[0], i[1], element_size, color)
+                bg= self.shape_cross_draw(shape_distractor, bg, i[0], i[1], element_size, color)
         stimuli_log = {'task':'shape', 'shape_target':shape_target, 'shape_distractor':shape_distractor,
                        'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                        'distractor_size':element_size, 'target_color':color, 'distractor_color':color, 
@@ -49,16 +49,16 @@ class PreattentiveObject:
         return bg, stimuli_log
                 
     def stimuli_size(self, target_num):
-        shape_list = ['circle', 'square', 'triangle', 'cross']
+        shape_list = [1,2,3,4,5]
         color_task = ['hue', 'brightness']
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
+        size_list = [30, 40, 50, 60, 70]
         if self.random_control==True:
             shape = random.choice(shape_list)
             color = self.convert_color(random.choice(color_task), random.choice(color_level))
         else:
-            shape = 'square'
+            shape = 1
             color = (255,255,255)
-        size_list = [30, 40, 50, 60, 70]
         size_distractor = random.choice(size_list)
         size_list.remove(size_distractor)
         size_target = random.choice(size_list)
@@ -67,11 +67,11 @@ class PreattentiveObject:
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], size_target, color)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], size_target, color)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], size_distractor, color)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], size_distractor, color)
         stimuli_log = {'task':'size', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':size_target,
                 'distractor_size':size_distractor, 'target_color':color, 'distractor_color':color,
@@ -80,7 +80,7 @@ class PreattentiveObject:
         return bg, stimuli_log
     
     def stimuli_hue(self, target_num):
-        shape_list = ['circle', 'square', 'triangle', 'cross']
+        shape_list = [1,2,3,4,5]
         size_list = [30, 40, 50, 60, 70]
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
         if self.random_control==True:
@@ -88,7 +88,7 @@ class PreattentiveObject:
             shape = random.choice(shape_list)
         else:
             element_size = 50
-            shape = 'square'
+            shape = 1
         hue_distractor = random.choice(color_level)
         color_distactor = self.convert_color('hue', hue_distractor)
         color_level.remove(hue_distractor)
@@ -99,11 +99,11 @@ class PreattentiveObject:
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_target)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_distactor)
         stimuli_log = {'task':'hue', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                 'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
@@ -112,7 +112,7 @@ class PreattentiveObject:
         return bg, stimuli_log
 
     def stimuli_brightness(self, target_num):
-        shape_list = ['circle', 'square', 'triangle', 'cross']
+        shape_list = [1,2,3,4,5]
         size_list = [30, 40, 50, 60, 70]
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
         if self.random_control==True:
@@ -120,7 +120,7 @@ class PreattentiveObject:
             shape = random.choice(shape_list)
         else:
             element_size = 50
-            shape = 'square'
+            shape = 1
         brightness_distractor = random.choice(color_level)
         color_distactor = self.convert_color('brightness', brightness_distractor)
         color_level.remove(brightness_distractor)
@@ -131,11 +131,11 @@ class PreattentiveObject:
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_target)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_distactor)
         stimuli_log = {'task':'brightness', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                 'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
@@ -229,8 +229,15 @@ class PreattentiveObject:
         self.set_size = set_size
         self.grid_index_list = list(range(set_size**2))
     
+    def shape_cross_draw(self, shape, bg, x1, y1, size, color):
+        if shape == 1:
+            bg = self.rectangle(bg, x1, y1, size, color)
+        else:
+            bg = self.cross_detail(shape, bg, x1, y1, size, color)
+        return bg
+
     def shape_draw(self, shape, bg, x1, y1, size, color):
-        if shape == 'cross':
+        if shape == 0:
             bg = self.cross(bg, x1, y1, size, color)
         elif shape == 'square':
             bg = self.rectangle(bg, x1, y1, size, color)
@@ -240,6 +247,15 @@ class PreattentiveObject:
             bg = self.triangle(bg, x1, y1, size, color)
         else:
             raise Exception("shape is not in defined set")
+        return bg
+
+    def cross_detail(self, shape, bg, x1, y1, size, color):
+        # color is triplet tuple. e.g.,(255,255,255)
+        # color tuple contains (Blue, Green, Red)
+        ratio = shape*2
+        for i, channel in enumerate(color):
+            bg[int(y1-size/2):int(y1+size/2),int(x1-size/ratio):int(x1+size/ratio),i].fill(channel)
+            bg[int(y1-size/ratio):int(y1+size/ratio),int(x1-size/2):int(x1+size/2),i].fill(channel)
         return bg
 
     def cross(self, bg, x1, y1, size, color):

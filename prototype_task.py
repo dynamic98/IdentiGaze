@@ -48,12 +48,12 @@ class ProtoTypeTask:
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(200) & 0xff
             else:
-                # if len(self.preattentive_object.grid_index_list)==0:
-                #     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
-                # self.preattentive_object.grid_index_list.remove(target_index)
+                if len(self.preattentive_object.grid_index_list)==0:
+                    self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
-                self.preattentive_object.set_set_size(random.choice(list(range(3,7))))
+                # self.preattentive_object.set_set_size(random.choice(list(range(3,7))))
                 target_index = random.choice(self.preattentive_object.grid_index_list)
+                self.preattentive_object.grid_index_list.remove(target_index)
 
                 task = random.choice(list(range(5)))
                 if task == 0:
