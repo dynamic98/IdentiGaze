@@ -12,6 +12,7 @@ class PreattentiveObject:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.background = np.zeros((self.screen_height,self.screen_width,3), dtype='uint8')
+        self.hue_list = ['red','yellow','green','blue']
         self.set_bg_color(bg_color)
         self.set_FOV(600,600)
         self.set_set_size(6)
@@ -89,11 +90,12 @@ class PreattentiveObject:
         else:
             element_size = 50
             shape = 1
-        hue_distractor = random.choice(color_level)
-        color_distactor = self.convert_color('hue', hue_distractor)
-        color_level.remove(hue_distractor)
-        hue_target = random.choice(color_level)
-        color_target = self.convert_color('hue', hue_target)
+        hue = self.select_hue()
+        hue_level_distractor = random.choice(color_level)
+        color_distactor = self.convert_hue(hue, hue_level_distractor)
+        color_level.remove(hue_level_distractor)
+        hue_level_target = random.choice(color_level)
+        color_target = self.convert_hue(hue, hue_level_target)
         grid_list = self.calc_grid(element_size)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
@@ -122,10 +124,10 @@ class PreattentiveObject:
             element_size = 50
             shape = 1
         brightness_distractor = random.choice(color_level)
-        color_distactor = self.convert_color('brightness', brightness_distractor)
+        color_distactor = self.convert_brightness(brightness_distractor)
         color_level.remove(brightness_distractor)
         brightness_target = random.choice(color_level)
-        color_target = self.convert_color('brightness', brightness_target)
+        color_target = self.convert_brightness(brightness_target)
         grid_list = self.calc_grid(element_size)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
@@ -306,9 +308,78 @@ class PreattentiveObject:
         qy = oy + math.sin(angle)*(px-ox) + math.cos(angle)*(py-oy)
         return (int(qx), int(qy))
 
-
     def set_random_control(self, random:bool=True):
         self.random_control = random
+
+    def select_hue(self):
+        if len(self.hue_list)==0:
+            self.hue_list = ['red','yellow','green','blue']
+        hue = random.choice(self.hue_list)
+        self.hue_list.remove(hue)
+        return hue
+
+    def convert_hue(self, hue:str, level:str):
+        # task: 'hue', 'brightness'
+        # level: 'very low', 'low', 'mid', 'high', 'very high'
+        if hue == 'red':
+            if level == 'very low':
+                color = (62, 101, 127)
+            elif level == 'low':
+                color = (62, 82, 127)
+            elif level == 'mid':
+                color = (62, 62, 127)
+            elif level == 'high':
+                color = (82, 62, 127)
+            elif level == 'very high':
+                color = (101, 62, 127)
+        elif hue == 'yellow':
+            if level == 'very low':
+                color = (62, 127, 88)
+            elif level == 'low':
+                color = (62, 127, 107)
+            elif level == 'mid':
+                color = (62, 127, 127)
+            elif level == 'high':
+                color = (62, 107, 127)
+            elif level == 'very high':
+                color = (62, 88, 127)
+        elif hue == 'green':
+            if level == 'very low':
+                color = (101, 127, 62)
+            elif level == 'low':
+                color = (82, 127, 62)
+            elif level == 'mid':
+                color = (62, 127, 62)
+            elif level == 'high':
+                color = (62, 127, 82)
+            elif level == 'very high':
+                color = (62, 127, 101)
+        elif hue == 'blue':
+            if level == 'very low':
+                color = (127, 62, 101)
+            elif level == 'low':
+                color = (127, 62, 82)
+            elif level == 'mid':
+                color = (127, 62, 62)
+            elif level == 'high':
+                color = (127, 82, 62)
+            elif level == 'very high':
+                color = (127, 101, 62)
+        return color
+    
+    def convert_brightness(self, level:str):
+        # level: 'very low', 'low', 'mid', 'high', 'very high'
+        if level == 'very low':
+            color = (51, 51, 51)
+        elif level == 'low':
+            color = (102, 102, 102)
+        elif level == 'mid':
+            color = (153, 153, 153)
+        elif level == 'high':
+            color = (204, 204, 204)
+        elif level == 'very high':
+            color = (255, 255, 255)
+        return color
 
     def convert_color(self, task:str, level:str):
         # task: 'hue', 'brightness'
@@ -338,9 +409,24 @@ class PreattentiveObject:
         return color
         
 if __name__=='__main__':
-    myPreattentiveObject = PreattentiveObject(1280,1080,254)
+    # myPreattentiveObject = PreattentiveObject(1280,1080,254)
     # myPreattentiveObject.set_set_size(4)
     # myPreattentiveObject.set_set_size(8)
-    myPreattentiveObject.test()
+    # myPreattentiveObject.test()
+    # Saturation : 129
+    # Brightness : 127
+    sample_image = np.zeros((1000,1000,3), dtype='uint8')
+    sample_image[:,:,1].fill(129)
+    sample_image[:,:,2].fill(127)
+    for hue in [0, 30, 60, 120]:
+        print("=============")
+        print(hue)
+        for i in range(-2,3,1):
+            change_hue = hue - i*9
+            if change_hue < 0:
+                change_hue = 180+change_hue
+            change_hue = int(change_hue)
+            sample_image[:,:,0].fill(change_hue)
+            print(cv2.cvtColor(sample_image, cv2.COLOR_HSV2BGR)[0,0,:])
 
 

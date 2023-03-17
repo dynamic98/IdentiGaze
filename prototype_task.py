@@ -55,18 +55,18 @@ class ProtoTypeTask:
                 # self.preattentive_object.set_set_size(random.choice(list(range(3,7))))
                 target_index = random.choice(self.preattentive_object.grid_index_list)
                 self.preattentive_object.grid_index_list.remove(target_index)
-
-                task = random.choice(list(range(5)))
-                if task == 0:
-                    bg, _, = self.preattentive_object.stimuli_shape(target_index)
-                elif task == 1:
-                    bg, _, = self.preattentive_object.stimuli_size(target_index)
-                elif task == 2:
-                    bg, _, = self.preattentive_object.stimuli_hue(target_index)
-                elif task == 3:
-                    bg, _, = self.preattentive_object.stimuli_brightness(target_index)
-                elif task == 4:
-                    bg, _, = self.preattentive_object.stimuli_orientation(target_index)
+                bg, _ = self.preattentive_object.stimuli_hue(target_index)
+                # task = random.choice(list(range(5)))
+                # if task == 0:
+                #     bg, _, = self.preattentive_object.stimuli_shape(target_index)
+                # elif task == 1:
+                #     bg, _, = self.preattentive_object.stimuli_size(target_index)
+                # elif task == 2:
+                #     bg, _, = self.preattentive_object.stimuli_hue(target_index)
+                # elif task == 3:
+                #     bg, _, = self.preattentive_object.stimuli_brightness(target_index)
+                # elif task == 4:
+                #     bg, _, = self.preattentive_object.stimuli_orientation(target_index)
                 self.ready = 0
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(300) & 0xff
@@ -209,5 +209,5 @@ class ProtoTypeTask:
 if __name__=='__main__':
     # print("Hello, World!")
     # myProto = ProtoTypeTask("familiar")
-    myProto = ProtoTypeTask("linearface")
-    # myProto = ProtoTypeTask("preattentive")
+    # myProto = ProtoTypeTask("linearface")
+    myProto = ProtoTypeTask("preattentive")
