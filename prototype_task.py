@@ -62,24 +62,10 @@ class ProtoTypeTask:
         cv2.imshow('image', bg)
         cv2.waitKey(0) & 0xff
         task_count = 0
+        cross_bg = self.get_cross()
+        empty_bg = self.background.copy()
         while task_count<5:
-            if self.ready==0:
-                bg = self.get_cross()
-                self.ready = 1
-                cv2.imshow('image', bg)
-                cv2.waitKey(800) & 0xff
-                time.sleep(0.8)
-                keyboard_A_btn()
-
-            elif self.ready == 1:
-                bg = self.background.copy()
-                self.ready = 2
-                cv2.imshow('image', bg)
-                cv2.waitKey(200) & 0xff
-                time.sleep(0.2)
-                keyboard_B_btn()
-            else:
-                task_count += 1
+            if self.ready == 2:
                 if len(self.preattentive_object.grid_index_list)==0:
                     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
@@ -98,11 +84,35 @@ class ProtoTypeTask:
                     bg, _, = self.preattentive_object.stimuli_brightness(target_index)
                 elif task == 4:
                     bg, _, = self.preattentive_object.stimuli_orientation(target_index)
-                self.ready = 0
-                cv2.imshow('image', bg)
-                cv2.waitKey(700) & 0xff
-                time.sleep(0.7)
-                keyboard_C_btn()
+            start_time = time.time()
+            while True:
+                if self.ready==0:
+                    cv2.imshow('image', cross_bg)
+                    key = cv2.waitKey(60) & 0xff
+                    time_passed = time.time() - start_time
+                    if time_passed > 0.8:
+                        keyboard_A_btn()
+                        self.ready = 1
+                        break
+
+                elif self.ready == 1:
+                    cv2.imshow('image', empty_bg)
+                    key = cv2.waitKey(60) & 0xff
+                    time_passed = time.time() - start_time
+                    if time_passed > 0.2:
+                        keyboard_B_btn()
+                        self.ready = 2
+                        break
+
+                else:
+                    cv2.imshow('image', bg)
+                    key = cv2.waitKey(700) & 0xff
+                    time_passed = time.time() - start_time
+                    if time_passed > 0.7:
+                        keyboard_C_btn()
+                        self.ready = 0
+                        task_count += 1
+                        break
 
 
             # cv2.setMouseCallback('image', event_start)
