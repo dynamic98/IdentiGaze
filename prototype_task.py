@@ -1,4 +1,7 @@
 import os
+import time 
+import json
+import itertools
 import tkinter as tk
 import numpy as np
 import cv2
@@ -6,7 +9,6 @@ import random
 from preattentive_object import PreattentiveObject
 from familiar_object import FamiliarObject
 from pynput.keyboard import Controller
-import time 
 
 keyboard_button = Controller()
 
@@ -38,16 +40,18 @@ class ProtoTypeTask:
         self.background = np.zeros((self.screen_height,self.screen_width), dtype='uint8')
         self.background_color = np.zeros((self.screen_height,self.screen_width,3), dtype='uint8')
         self.ready = False
+        self.task = task
         self.preattentive_list = os.listdir('IdentiGaze-Stimuli')
         self.preattentive_object = PreattentiveObject(self.screen_width, self.screen_height, 'black')
         self.familiar_object = FamiliarObject(self.screen_width, self.screen_height, 'black')
+        self.gather_information()
         # self.preattentive_object.set_set_size(2)
 
-        if task=='familiar':
+        if self.task=='familiar':
             self.familiar()
-        elif task=='preattentive':
+        elif self.task=='preattentive':
             self.preattentive()
-        elif task=='linearface':
+        elif self.task=='linearface':
             self.linearface()
 
     def preattentive(self):
@@ -55,35 +59,40 @@ class ProtoTypeTask:
         Interface_y = 0
         bg = self.background_color.copy()
         # self.preattentive_object.random_control = False
-        cv2.putText(bg, "Press the key to start the test", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Please focus on an odd element (shape, color, size, orientation).", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Press any key to start the test", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
         cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
         cv2.moveWindow('image', Interface_x, Interface_y)
         cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow('image', bg)
         cv2.waitKey(0) & 0xff
+        stimuli_amount = 100
         task_count = 0
+        self.make_task_list(stimuli_amount, 5)
         cross_bg = self.get_cross()
         empty_bg = self.background.copy()
-        while task_count<5:
+        log_data = {}
+
+        while task_count<stimuli_amount:
             if self.ready == 2:
                 if len(self.preattentive_object.grid_index_list)==0:
                     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
-                self.preattentive_object.set_set_size(random.choice(list(range(3,6))))
+                self.preattentive_object.set_set_size(random.choice(list(range(4,7))))
                 target_index = random.choice(self.preattentive_object.grid_index_list)
                 self.preattentive_object.grid_index_list.remove(target_index)
                 # bg, _ = self.preattentive_object.stimuli_hue(target_index)
-                task = random.choice(list(range(5)))
+                task = self.choice_task()
                 if task == 0:
-                    bg, _, = self.preattentive_object.stimuli_shape(target_index)
+                    bg, log, = self.preattentive_object.stimuli_shape(target_index)
                 elif task == 1:
-                    bg, _, = self.preattentive_object.stimuli_size(target_index)
+                    bg, log, = self.preattentive_object.stimuli_size(target_index)
                 elif task == 2:
-                    bg, _, = self.preattentive_object.stimuli_hue(target_index)
+                    bg, log, = self.preattentive_object.stimuli_hue(target_index)
                 elif task == 3:
-                    bg, _, = self.preattentive_object.stimuli_brightness(target_index)
+                    bg, log, = self.preattentive_object.stimuli_brightness(target_index)
                 elif task == 4:
-                    bg, _, = self.preattentive_object.stimuli_orientation(target_index)
+                    bg, log, = self.preattentive_object.stimuli_orientation(target_index)
             start_time = time.time()
             while True:
                 if self.ready==0:
@@ -108,15 +117,16 @@ class ProtoTypeTask:
                     cv2.imshow('image', bg)
                     key = cv2.waitKey(700) & 0xff
                     time_passed = time.time() - start_time
-                    if time_passed > 0.7:
+                    if time_passed > self.stimuli_time:
                         keyboard_C_btn()
                         self.ready = 0
                         task_count += 1
+                        log_data[task_count] = log
                         break
 
-
-            # cv2.setMouseCallback('image', event_start)
         cv2.destroyAllWindows()
+        self.save_log_data(log_data)
+
 
     def preattentive_old(self):
         Interface_x = 0
@@ -198,7 +208,8 @@ class ProtoTypeTask:
         Interface_x = 0
         Interface_y = 0
         bg = self.background.copy()
-        cv2.putText(bg, "Press the key to start the test", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Please focus on an odd element.", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Press the key to start the test", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
         cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
         cv2.moveWindow('image', Interface_x, Interface_y)
         cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -244,9 +255,44 @@ class ProtoTypeTask:
         cross[int(self.screen_height/2)-30:int(self.screen_height/2)+30,int(self.screen_width/2)-5:int(self.screen_width/2)+5].fill(0)
         cross[int(self.screen_height/2)-5:int(self.screen_height/2)+5,int(self.screen_width/2)-30:int(self.screen_width/2)+30].fill(0)
         return cross
+    
+    def make_task_list(self, total_stimuli, task):
+        task_list = [[i]*(total_stimuli//task) for i in range(task)]
+        flatten = list(itertools.chain(*task_list))
+        random.shuffle(flatten)
+        self.task_list = flatten
+
+    def choice_task(self):
+        this_task = random.choice(self.task_list)
+        self.task_list.remove(this_task)
+        if len(self.task_list) == 0:
+            print("End")
+        return this_task
+    
+    def save_log_data(self, log_data):
+        if self.task and self.participant and self.stimuli_time:
+            tm = time.gmtime(time.time())
+            with open(os.path.join('results',f'{tm.tm_mon}.{tm.tm_mday}.{tm.tm_hour}.{tm.tm_min}.{tm.tm_sec}_{self.task}_{self.participant}_{self.stimuli_time}.json'), 'w') as f:
+                json.dump(log_data, f)
+        else:
+            raise Exception("뭔가 문제가 생겼어요. task / participant / stimuli 를 제대로 적어주시지 않았나봐요.")
+
+    def gather_information(self):
+        participant = str(input("그대의 이름을 적어주세요: "))
+        stimuli = int(input("수행할 task 번호를 입력해주세요. 1(0.7초), 2(1초) : "))
+        if stimuli == 1:
+            self.stimuli_time = 0.7
+        elif stimuli == 2:
+            self.stimuli_time = 1
+        else:
+            raise Exception("task 번호로는 1 또는 2를 적어주세요.")
+        self.participant = participant
 
 if __name__=='__main__':
     # print("Hello, World!")
     # myProto = ProtoTypeTask("familiar")
     # myProto = ProtoTypeTask("linearface")
     myProto = ProtoTypeTask("preattentive")
+    # task_list = ([i]*(100//5) for i in range(5))
+    # print(list(itertools.chain(*task_list)))
+    # print(time.localtime(time.time()))
