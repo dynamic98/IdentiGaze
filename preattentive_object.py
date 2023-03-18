@@ -294,7 +294,6 @@ class PreattentiveObject:
         for i in range(1,5):
             rotated_coordinate = self.rotate((x1,y1),(ax,ay),math.pi*(i*72/180))
             pentagon_cnt.append(rotated_coordinate)
-            print(rotated_coordinate)
         pentagon_cnt = np.array(pentagon_cnt)
         bg = cv2.drawContours(bg, [pentagon_cnt], 0, color, -1)
         return bg

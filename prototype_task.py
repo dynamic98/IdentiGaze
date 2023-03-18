@@ -6,6 +6,8 @@ import random
 from preattentive_object import PreattentiveObject
 from familiar_object import FamiliarObject
 from pynput.keyboard import Controller
+import time 
+
 keyboard_button = Controller()
 
 def keyboard_A_btn():
@@ -59,21 +61,25 @@ class ProtoTypeTask:
         cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow('image', bg)
         cv2.waitKey(0) & 0xff
-        while True:
+        task_count = 0
+        while task_count<5:
             if self.ready==0:
-                # keyboard_A_btn()
                 bg = self.get_cross()
                 self.ready = 1
                 cv2.imshow('image', bg)
-                key = cv2.waitKey(800) & 0xff
+                cv2.waitKey(800) & 0xff
+                time.sleep(0.8)
+                keyboard_A_btn()
+
             elif self.ready == 1:
-                # keyboard_B_btn()
                 bg = self.background.copy()
                 self.ready = 2
                 cv2.imshow('image', bg)
-                key = cv2.waitKey(200) & 0xff
+                cv2.waitKey(200) & 0xff
+                time.sleep(0.2)
+                keyboard_B_btn()
             else:
-                # keyboard_C_btn()
+                task_count += 1
                 if len(self.preattentive_object.grid_index_list)==0:
                     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
@@ -94,15 +100,13 @@ class ProtoTypeTask:
                     bg, _, = self.preattentive_object.stimuli_orientation(target_index)
                 self.ready = 0
                 cv2.imshow('image', bg)
-                key = cv2.waitKey(700) & 0xff
+                cv2.waitKey(700) & 0xff
+                time.sleep(0.7)
+                keyboard_C_btn()
+
 
             # cv2.setMouseCallback('image', event_start)
-            if key == ord('q'):
-                cv2.destroyAllWindows()
-                print('End')
-                break
-            else:
-                continue
+        cv2.destroyAllWindows()
 
     def preattentive_old(self):
         Interface_x = 0
