@@ -278,14 +278,14 @@ class ProtoTypeTask:
             raise Exception("뭔가 문제가 생겼어요. task / participant / stimuli 를 제대로 적어주시지 않았나봐요.")
 
     def gather_information(self):
-        participant = str(input("그대의 이름을 적어주세요: "))
-        stimuli = int(input("수행할 task 번호를 입력해주세요. 1(0.7초), 2(1초) : "))
+        participant = str(input("Enter your name in English: "))
+        stimuli = int(input("Enter the number with your task. 1(0.5 sec), 2(0.7 sec) : "))
         if stimuli == 1:
-            self.stimuli_time = 0.7
+            self.stimuli_time = 0.5
         elif stimuli == 2:
-            self.stimuli_time = 1
+            self.stimuli_time = 0.7
         else:
-            raise Exception("task 번호로는 1 또는 2를 적어주세요.")
+            raise Exception("Enter the number for 1 or 2.")
         self.participant = participant
 
 if __name__=='__main__':
