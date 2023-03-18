@@ -12,7 +12,14 @@ class PreattentiveObject:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.background = np.zeros((self.screen_height,self.screen_width,3), dtype='uint8')
+
+        self.size_list = [30, 40, 50, 60, 70]
+        self.shape_list = [1,2,3,4,5]
         self.hue_list = ['red','yellow','green','blue']
+        self.hue_level = ['very low', 'low', 'mid', 'high', 'very high']
+        self.brightness_level = ['very low', 'low', 'mid', 'high', 'very high']
+        self.orientation_list = [-30, -15, 0, 15, 30]
+
         self.set_bg_color(bg_color)
         self.set_FOV(600,600)
         self.set_set_size(6)
@@ -22,27 +29,26 @@ class PreattentiveObject:
         size_list = [30, 40, 50, 60, 70]
         color_task = ['hue', 'brightness']
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
-        shape_list = [1,2,3,4,5]
         if self.random_control==True:
             element_size = random.choice(size_list)
-            color = self.convert_color(random.choice(color_task), random.choice(color_level))
+            color = self.random_color()
+            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
         else:
             element_size = 50
             color = (255,255,255)
-        shape_distractor = random.choice(shape_list)
-        shape_list.remove(shape_distractor)
-        shape_target = random.choice(shape_list)
+        shape_distractor = self.select_shape()
+        shape_target = self.select_shape()
         grid_list = self.calc_grid(element_size)
         # random.shuffle(grid_list)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_cross_draw(shape_target, bg, i[0], i[1], element_size, color)
+                bg = self.shape_draw(shape_target, bg, i[0], i[1], element_size, color)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg= self.shape_cross_draw(shape_distractor, bg, i[0], i[1], element_size, color)
+                bg= self.shape_draw(shape_distractor, bg, i[0], i[1], element_size, color)
         stimuli_log = {'task':'shape', 'shape_target':shape_target, 'shape_distractor':shape_distractor,
                        'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                        'distractor_size':element_size, 'target_color':color, 'distractor_color':color, 
@@ -53,26 +59,25 @@ class PreattentiveObject:
         shape_list = [1,2,3,4,5]
         color_task = ['hue', 'brightness']
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
-        size_list = [30, 40, 50, 60, 70]
         if self.random_control==True:
             shape = random.choice(shape_list)
-            color = self.convert_color(random.choice(color_task), random.choice(color_level))
+            color = self.random_color()
+            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
         else:
             shape = 1
             color = (255,255,255)
-        size_distractor = random.choice(size_list)
-        size_list.remove(size_distractor)
-        size_target = random.choice(size_list)
+        size_distractor = self.select_size()
+        size_target = self.select_size()
         grid_list = self.calc_grid(size_distractor)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], size_target, color)
+                bg = self.shape_draw(shape, bg, i[0], i[1], size_target, color)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], size_distractor, color)
+                bg = self.shape_draw(shape, bg, i[0], i[1], size_distractor, color)
         stimuli_log = {'task':'size', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':size_target,
                 'distractor_size':size_distractor, 'target_color':color, 'distractor_color':color,
@@ -83,7 +88,6 @@ class PreattentiveObject:
     def stimuli_hue(self, target_num):
         shape_list = [1,2,3,4,5]
         size_list = [30, 40, 50, 60, 70]
-        color_level = ['very low', 'low', 'mid', 'high', 'very high']
         if self.random_control==True:
             element_size = random.choice(size_list)
             shape = random.choice(shape_list)
@@ -91,21 +95,20 @@ class PreattentiveObject:
             element_size = 50
             shape = 1
         hue = self.select_hue()
-        hue_level_distractor = random.choice(color_level)
+        hue_level_distractor = self.select_hue_level()
         color_distactor = self.convert_hue(hue, hue_level_distractor)
-        color_level.remove(hue_level_distractor)
-        hue_level_target = random.choice(color_level)
+        hue_level_target = self.select_hue_level()
         color_target = self.convert_hue(hue, hue_level_target)
         grid_list = self.calc_grid(element_size)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_target)
+                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
         stimuli_log = {'task':'hue', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                 'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
@@ -116,28 +119,26 @@ class PreattentiveObject:
     def stimuli_brightness(self, target_num):
         shape_list = [1,2,3,4,5]
         size_list = [30, 40, 50, 60, 70]
-        color_level = ['very low', 'low', 'mid', 'high', 'very high']
         if self.random_control==True:
             element_size = random.choice(size_list)
             shape = random.choice(shape_list)
         else:
             element_size = 50
             shape = 1
-        brightness_distractor = random.choice(color_level)
+        brightness_distractor = self.select_brightness_level()
         color_distactor = self.convert_brightness(brightness_distractor)
-        color_level.remove(brightness_distractor)
-        brightness_target = random.choice(color_level)
+        brightness_target = self.select_brightness_level()
         color_target = self.convert_brightness(brightness_target)
         grid_list = self.calc_grid(element_size)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
             if n==target_num:
                 # target object
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_target)
+                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
                 target_x = i[0]
                 target_y = i[1]
             else:
-                bg = self.shape_cross_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
         stimuli_log = {'task':'brightness', 'shape_target':shape, 'shape_distractor':shape,
                 'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
                 'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
@@ -151,14 +152,13 @@ class PreattentiveObject:
         color_level = ['very low', 'low', 'mid', 'high', 'very high']
         if self.random_control==True:
             element_size = random.choice(size_list)
-            color = self.convert_color(random.choice(color_task), random.choice(color_level))
+            color = self.random_color()
+            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
         else:
             element_size = 50
             color = (255,255,255)
-        orientation_list = [-30, -15, 0, 15, 30]
-        orientation_distractor = random.choice(orientation_list)
-        orientation_list.remove(orientation_distractor)
-        orientation_target = random.choice(orientation_list)
+        orientation_distractor = self.select_orientation()
+        orientation_target = self.select_orientation()
         grid_list = self.calc_grid(element_size)
         bg = self.background.copy()
         for n, i in enumerate(grid_list):
@@ -187,7 +187,7 @@ class PreattentiveObject:
         #     bg = self.triangle(bg, grid[0], grid[1], 50, (100,200,50))
             # bg = self.cross(bg, grid[0], grid[1], 50, (100,200,50))
             # bg = self.rectangle(bg, grid[0], grid[1], 50, (100,200,50))
-            bg = self.orientation(bg, grid[0], grid[1], 50, 5, (100,200,50))
+            bg = self.hexagon(bg, grid[0], grid[1], 50, (100,200,50))
         cv2.imshow('image',bg)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -239,14 +239,16 @@ class PreattentiveObject:
         return bg
 
     def shape_draw(self, shape, bg, x1, y1, size, color):
-        if shape == 0:
-            bg = self.cross(bg, x1, y1, size, color)
-        elif shape == 'square':
-            bg = self.rectangle(bg, x1, y1, size, color)
-        elif shape == 'circle':
-            bg = cv2.circle(bg, (x1, y1), int(size/2), color, -1)
-        elif shape == 'triangle':
+        if shape == 1:
             bg = self.triangle(bg, x1, y1, size, color)
+        elif shape == 2:
+            bg = self.rectangle(bg, x1, y1, size, color)
+        elif shape == 3:
+            bg = self.pentagon(bg, x1, y1, size, color)
+        elif shape == 4:
+            bg = self.hexagon(bg, x1, y1, size, color)
+        elif shape == 5:
+            bg = cv2.circle(bg, (x1, y1), int(size/2), color, -1)
         else:
             raise Exception("shape is not in defined set")
         return bg
@@ -284,6 +286,31 @@ class PreattentiveObject:
         bg = cv2.drawContours(bg, [triangle_cnt], 0, color, -1)
         return bg
 
+    def pentagon (self, bg, x1, y1, size, color):
+        radius = size/2
+        ax = x1
+        ay = y1 - radius
+        pentagon_cnt = [(int(ax), int(ay))]
+        for i in range(1,5):
+            rotated_coordinate = self.rotate((x1,y1),(ax,ay),math.pi*(i*72/180))
+            pentagon_cnt.append(rotated_coordinate)
+            print(rotated_coordinate)
+        pentagon_cnt = np.array(pentagon_cnt)
+        bg = cv2.drawContours(bg, [pentagon_cnt], 0, color, -1)
+        return bg
+    
+    def hexagon (self, bg, x1, y1, size, color):
+        radius = size/2
+        ax = x1
+        ay = y1 - radius
+        hexagon_cnt = [(int(ax), int(ay))]
+        for i in range(1,6):
+            rotated_coordinate = self.rotate((x1,y1),(ax,ay),math.pi*(i*60/180))
+            hexagon_cnt.append(rotated_coordinate)
+        hexagon_cnt = np.array(hexagon_cnt)
+        bg = cv2.drawContours(bg, [hexagon_cnt], 0, color, -1)
+        return bg
+
     def orientation(self, bg, x1, y1, size, direction, color):
         origin = (x1, y1)
         half_length = size/2
@@ -312,11 +339,57 @@ class PreattentiveObject:
         self.random_control = random
 
     def select_hue(self):
-        if len(self.hue_list)==0:
+        if len(self.hue_list)==1:
             self.hue_list = ['red','yellow','green','blue']
         hue = random.choice(self.hue_list)
         self.hue_list.remove(hue)
         return hue
+
+    def select_hue_level(self):
+        if len(self.hue_level)==1:
+            self.hue_level = ['very low', 'low', 'mid', 'high', 'very high']
+        hue_level = random.choice(self.hue_level)
+        self.hue_level.remove(hue_level)
+        return hue_level
+
+    def select_brightness_level(self):
+        if len(self.brightness_level)==1:
+            self.brightness_level = ['very low', 'low', 'mid', 'high', 'very high']
+        brightness_level = random.choice(self.brightness_level)
+        self.brightness_level.remove(brightness_level)
+        return brightness_level
+
+    def select_shape(self):
+        if len(self.shape_list)==1:
+            self.shape_list = [1,2,3,4,5]
+        shape = random.choice(self.shape_list)
+        self.shape_list.remove(shape)
+        return shape
+    
+    def select_size(self):
+        if len(self.size_list)==1:
+            self.size_list = [30, 40, 50, 60, 70]
+        size = random.choice(self.size_list)
+        self.size_list.remove(size)
+        return size
+
+    def select_orientation(self):
+        if len(self.orientation_list)==1:
+            self.orientation_list = [-30, -15, 0, 15, 30]
+        orientation = random.choice(self.orientation_list)
+        self.orientation_list.remove(orientation)
+        return orientation
+
+    def random_color(self):
+        task = random.choice(list(range(2)))
+        if task==0: 
+            hue = random.choice(['red','yellow','green','blue'])
+            level = random.choice(['very low', 'low', 'mid', 'high', 'very high'])
+            color = self.convert_hue(hue, level)
+        else:
+            level = random.choice(['very low', 'low', 'mid', 'high', 'very high'])
+            color = self.convert_brightness(level)
+        return color
 
     def convert_hue(self, hue:str, level:str):
         # task: 'hue', 'brightness'
@@ -409,24 +482,24 @@ class PreattentiveObject:
         return color
         
 if __name__=='__main__':
-    # myPreattentiveObject = PreattentiveObject(1280,1080,254)
+    myPreattentiveObject = PreattentiveObject(1280,1080,254)
     # myPreattentiveObject.set_set_size(4)
     # myPreattentiveObject.set_set_size(8)
-    # myPreattentiveObject.test()
+    myPreattentiveObject.test()
     # Saturation : 129
     # Brightness : 127
-    sample_image = np.zeros((1000,1000,3), dtype='uint8')
-    sample_image[:,:,1].fill(129)
-    sample_image[:,:,2].fill(127)
-    for hue in [0, 30, 60, 120]:
-        print("=============")
-        print(hue)
-        for i in range(-2,3,1):
-            change_hue = hue - i*9
-            if change_hue < 0:
-                change_hue = 180+change_hue
-            change_hue = int(change_hue)
-            sample_image[:,:,0].fill(change_hue)
-            print(cv2.cvtColor(sample_image, cv2.COLOR_HSV2BGR)[0,0,:])
+    # sample_image = np.zeros((1000,1000,3), dtype='uint8')
+    # sample_image[:,:,1].fill(129)
+    # sample_image[:,:,2].fill(127)
+    # for hue in [0, 30, 60, 120]:
+    #     print("=============")
+    #     print(hue)
+    #     for i in range(-2,3,1):
+    #         change_hue = hue - i*9
+    #         if change_hue < 0:
+    #             change_hue = 180+change_hue
+    #         change_hue = int(change_hue)
+    #         sample_image[:,:,0].fill(change_hue)
+    #         print(cv2.cvtColor(sample_image, cv2.COLOR_HSV2BGR)[0,0,:])
 
 

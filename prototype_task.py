@@ -5,6 +5,28 @@ import cv2
 import random
 from preattentive_object import PreattentiveObject
 from familiar_object import FamiliarObject
+from pynput.keyboard import Controller
+keyboard_button = Controller()
+
+def keyboard_A_btn():
+    keyboard_button.press('a')
+    keyboard_button.release('a')
+
+
+def keyboard_B_btn():
+    keyboard_button.press('b')
+    keyboard_button.release('b')
+
+
+def keyboard_C_btn():
+    keyboard_button.press('c')
+    keyboard_button.release('c')
+
+
+def keyboard_D_btn():
+    keyboard_button.press('d')
+    keyboard_button.release('d')
+
 
 class ProtoTypeTask:
     def __init__(self, task):
@@ -43,33 +65,36 @@ class ProtoTypeTask:
                 self.ready = 1
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(800) & 0xff
+                keyboard_A_btn()
             elif self.ready == 1:
                 bg = self.background.copy()
                 self.ready = 2
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(200) & 0xff
+                keyboard_B_btn()
             else:
                 if len(self.preattentive_object.grid_index_list)==0:
                     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
-                # self.preattentive_object.set_set_size(random.choice(list(range(3,7))))
+                self.preattentive_object.set_set_size(random.choice(list(range(3,6))))
                 target_index = random.choice(self.preattentive_object.grid_index_list)
                 self.preattentive_object.grid_index_list.remove(target_index)
-                bg, _ = self.preattentive_object.stimuli_hue(target_index)
-                # task = random.choice(list(range(5)))
-                # if task == 0:
-                #     bg, _, = self.preattentive_object.stimuli_shape(target_index)
-                # elif task == 1:
-                #     bg, _, = self.preattentive_object.stimuli_size(target_index)
-                # elif task == 2:
-                #     bg, _, = self.preattentive_object.stimuli_hue(target_index)
-                # elif task == 3:
-                #     bg, _, = self.preattentive_object.stimuli_brightness(target_index)
-                # elif task == 4:
-                #     bg, _, = self.preattentive_object.stimuli_orientation(target_index)
+                # bg, _ = self.preattentive_object.stimuli_hue(target_index)
+                task = random.choice(list(range(5)))
+                if task == 0:
+                    bg, _, = self.preattentive_object.stimuli_shape(target_index)
+                elif task == 1:
+                    bg, _, = self.preattentive_object.stimuli_size(target_index)
+                elif task == 2:
+                    bg, _, = self.preattentive_object.stimuli_hue(target_index)
+                elif task == 3:
+                    bg, _, = self.preattentive_object.stimuli_brightness(target_index)
+                elif task == 4:
+                    bg, _, = self.preattentive_object.stimuli_orientation(target_index)
                 self.ready = 0
                 cv2.imshow('image', bg)
-                key = cv2.waitKey(300) & 0xff
+                key = cv2.waitKey(700) & 0xff
+                keyboard_C_btn()
 
             # cv2.setMouseCallback('image', event_start)
             if key == ord('q'):
@@ -209,5 +234,5 @@ class ProtoTypeTask:
 if __name__=='__main__':
     # print("Hello, World!")
     # myProto = ProtoTypeTask("familiar")
-    # myProto = ProtoTypeTask("linearface")
-    myProto = ProtoTypeTask("preattentive")
+    myProto = ProtoTypeTask("linearface")
+    # myProto = ProtoTypeTask("preattentive")
