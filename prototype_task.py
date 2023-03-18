@@ -61,18 +61,19 @@ class ProtoTypeTask:
         cv2.waitKey(0) & 0xff
         while True:
             if self.ready==0:
+                # keyboard_A_btn()
                 bg = self.get_cross()
                 self.ready = 1
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(800) & 0xff
-                keyboard_A_btn()
             elif self.ready == 1:
+                # keyboard_B_btn()
                 bg = self.background.copy()
                 self.ready = 2
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(200) & 0xff
-                keyboard_B_btn()
             else:
+                # keyboard_C_btn()
                 if len(self.preattentive_object.grid_index_list)==0:
                     self.preattentive_object.grid_index_list = list(range(self.preattentive_object.set_size**2))
                 # bg, _, = self.preattentive_object.stimuli_hue(target_index)
@@ -94,7 +95,6 @@ class ProtoTypeTask:
                 self.ready = 0
                 cv2.imshow('image', bg)
                 key = cv2.waitKey(700) & 0xff
-                keyboard_C_btn()
 
             # cv2.setMouseCallback('image', event_start)
             if key == ord('q'):
@@ -234,5 +234,5 @@ class ProtoTypeTask:
 if __name__=='__main__':
     # print("Hello, World!")
     # myProto = ProtoTypeTask("familiar")
-    myProto = ProtoTypeTask("linearface")
-    # myProto = ProtoTypeTask("preattentive")
+    # myProto = ProtoTypeTask("linearface")
+    myProto = ProtoTypeTask("preattentive")
