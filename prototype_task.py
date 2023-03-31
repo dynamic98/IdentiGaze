@@ -115,7 +115,7 @@ class ProtoTypeTask:
 
                 else:
                     cv2.imshow('image', bg)
-                    key = cv2.waitKey(700) & 0xff
+                    key = cv2.waitKey(60) & 0xff
                     time_passed = time.time() - start_time
                     if time_passed > self.stimuli_time:
                         keyboard_C_btn()
