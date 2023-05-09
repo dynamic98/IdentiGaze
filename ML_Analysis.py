@@ -42,12 +42,35 @@ def processing(data, participant):
     data['Average Average Pupil right'] = data.apply(lambda x: average(x['Average Pupil Right']), axis=1)
     data['Average Saccade Velocity'] = data.apply(lambda x: average(x['Saccade Velocity']), axis=1)
     data['Average Saccade Amplitude'] = data.apply(lambda x: average(x['Saccade Amplitude']), axis=1)
-    data['Task Encoding'] = data.apply(lambda x: encoding(x['task'], x['simiarity']), axis=1)
+    data['Task Encoding'] = data.apply(lambda x: task_encoding(x['task']), axis=1)
+    data['Similarity Encoding'] = data.apply(lambda x: similarity_encoding(x['simiarity']), axis=1)
     data['Label'] = data.apply(lambda x: decide_label(x['User'], participant), axis=1)
 
     df = data.loc[:,['Fixation Count', 'Saccade Count', 'Average Fixation Duration', 'Average Saccade Duration', 
                      'Average Average Pupil Left', 'Average Average Pupil right', 'Average Saccade Velocity', 
-                     'Average Saccade Amplitude', 'Task Encoding', 'Label']]
+                     'Average Saccade Amplitude', 'Task Encoding', 'Similarity Encoding', 'Label']]
+    return df
+
+def whole_processing(data):
+    useful = ['User', 'Fixation Count', 'Saccade Count', 'Fixation Duration', 'Saccade Duration',
+              'Average Pupil Left', 'Average Pupil Right', 'Saccade Velocity',
+              'Saccade Amplitude', 'Target Hit', 'task', 'simiarity']
+    
+    data['simiarity'] = data.apply(lambda x: x['simiarity'][-3:], axis=1)
+    data['Average Fixation Duration'] = data.apply(lambda x: average(x['Fixation Duration']), axis=1)
+    data['Average Saccade Duration'] = data.apply(lambda x: average(x['Saccade Duration']), axis=1)
+    data['Average Average Pupil Left'] = data.apply(lambda x: average(x['Average Pupil Left']), axis=1)
+    data['Average Average Pupil right'] = data.apply(lambda x: average(x['Average Pupil Right']), axis=1)
+    data['Average Saccade Velocity'] = data.apply(lambda x: average(x['Saccade Velocity']), axis=1)
+    data['Average Saccade Amplitude'] = data.apply(lambda x: average(x['Saccade Amplitude']), axis=1)
+    data['Task Encoding'] = data.apply(lambda x: task_encoding(x['task']), axis=1)
+    data['Similarity Encoding'] = data.apply(lambda x: similarity_encoding(x['simiarity']), axis=1)
+    data['Label'] = data.apply(lambda x: encoding_multilabel(x['User']), axis=1)
+    
+    df = data.loc[:,['Fixation Count', 'Saccade Count', 'Average Fixation Duration', 'Average Saccade Duration', 
+                     'Average Average Pupil Left', 'Average Average Pupil right', 'Average Saccade Velocity', 
+                     'Average Saccade Amplitude', 'Task Encoding', 'Similarity Encoding', 'Label']]
+
     return df
 
 def sample_data(data):
@@ -78,10 +101,25 @@ def encoding(task, similarity):
     encoded_task = task_dict[task]
     return encoded_task*10+difference
 
+def task_encoding(task):
+    task_dict = {'shape':1, 'size':2, 'orientation':3, 'hue':4, 'brightness':5}
+    encoded_task = task_dict[task]
+    return encoded_task
+
+def similarity_encoding(similarity):
+    similarity = list(map(int,similarity.split('-')))
+    difference = abs(similarity[0]-similarity[1])
+    return difference
+
+def encoding_multilabel(participant):
+    p_dict = {'chungha':0,'dongik':1,'eunhye':2,'In-Taek':3,'jooyeong':4,'juchanseo':5,'junryeol':6,'juyeon':7,
+              'myounghun':8,'songmin':9,'sooyeon':10,'woojinkang':11,'yeogyeong':12}
+    return p_dict[participant]
+
 def take_x(data):
     domain = ['Fixation Count', 'Saccade Count', 'Average Fixation Duration', 'Average Saccade Duration', 
               'Average Average Pupil Left', 'Average Average Pupil right', 'Average Saccade Velocity', 
-              'Average Saccade Amplitude', 'Task Encoding']
+              'Average Saccade Amplitude', 'Task Encoding', 'Similarity Encoding']
     return data.loc[:,domain]
 
 def take_y(data):
@@ -121,6 +159,43 @@ def mlanalysis(data):
     return results
         
 
+def dt_analysis(data, participant):
+    dt_model = DecisionTreeClassifier(max_depth=5)  # Decision Tree
+    domain = ['Fixation Count', 'Saccade Count', 'Average Fixation Duration', 'Average Saccade Duration', 
+              'Average Average Pupil Left', 'Average Average Pupil right', 'Average Saccade Velocity', 
+              'Average Saccade Amplitude', 'Task Encoding', 'Similarity Encoding']
+    X = take_x(data).to_numpy()
+    y = take_y(data).to_numpy()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = clone(dt_model)
+    model = clf.fit(X_train, y_train)
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(100,100))
+    tree.plot_tree(clf, feature_names=domain, class_names=['True', 'False'], filled=True)
+    fig.savefig(os.path.join('ml-results', f"tree_task_{task}_p_{participant}.png"))
+    plt.close()
+
+def rf_analysis(data, participant):
+    rf_model = RandomForestClassifier(random_state=0)  # Random Forest
+    domain = ['Fixation Count', 'Saccade Count', 'Average Fixation Duration', 'Average Saccade Duration', 
+              'Average Average Pupil Left', 'Average Average Pupil right', 'Average Saccade Velocity', 
+              'Average Saccade Amplitude', 'Task Encoding', 'Similarity Encoding']
+    X = take_x(data).to_numpy()
+    y = take_y(data).to_numpy()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.1)
+    clf = clone(rf_model)
+    model = clf.fit(X_train, y_train)
+    test_score = clf.score(X_test, y_test)
+    plt.rcParams.update({'ytick.labelsize': 8})
+    plt.figure().set_figwidth(17)
+    plt.xlim(0,0.4)
+    plt.title(f"RandomForest Feature Importance, Score :{test_score}_{participant} in task time : {task}")
+
+    plt.barh(domain, clf.feature_importances_)
+    plt.savefig(os.path.join('ml-results', f"RandomForest_{task}_p_{participant}.png"))
+    plt.close()
+
+
+
 
 if __name__ == '__main__':
     # path = 'data/AOI_HitScoring/features+target/'
@@ -128,6 +203,8 @@ if __name__ == '__main__':
     participants = ['chungha','dongik','eunhye','In-Taek','jooyeong','juchanseo','junryeol','juyeon',
                     'myounghun','songmin','sooyeon','woojinkang','yeogyeong']
     tasks = [0.5, 0.7]
+    
+    # """
     results = {}
     for task in tasks:
         print("------------------------")
@@ -138,10 +215,22 @@ if __name__ == '__main__':
         for participant in participants:
             print(participant)
             print("------------------------")
-            train_data = sample_data(processing(data, participant))
+            # train_data = sample_data(processing(data, participant))
+            train_data = processing(data, participant)
             result = mlanalysis(train_data)
             results[task][participant] = result
-    with open("ml-results/first-result.json", "w") as f:
+            # dt_analysis(train_data, participant)
+            # rf_analysis(train_data, participant)
+    """
+    results = {}
+    for task in tasks:
+        data = together(task)
+        train_data = whole_processing(data)
+        result = mlanalysis(train_data)
+        results[task] = result
+
+    """
+    with open("ml-results/fourth-result.json", "w") as f:
         json.dump(results, f)
 
     # data = together(0.7)

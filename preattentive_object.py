@@ -25,154 +25,226 @@ class PreattentiveObject:
         self.set_set_size(6)
         self.set_random_control()
 
-    def stimuli_shape(self, target_num):
-        size_list = [30, 40, 50, 60, 70]
-        color_task = ['hue', 'brightness']
-        color_level = ['very low', 'low', 'mid', 'high', 'very high']
-        if self.random_control==True:
-            element_size = random.choice(size_list)
-            color = self.random_color()
-            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
+    def stimuli_shape(self, target_num, **kwargs):
+        if kwargs is not None and target_num is False:
+            self.set_set_size(kwargs['set_size'])
+            grid_list = self.calc_grid(kwargs['distractor_size'])
+            bg = self.background.copy()
+            target_num = self.take_targetnum(grid_list, kwargs['target_cnt'])
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    bg = self.shape_draw(kwargs['shape_target'], bg, i[0], i[1], kwargs['target_size'], kwargs['target_color'])
+                else:
+                    bg = self.shape_draw(kwargs['shape_distractor'], bg, i[0], i[1], kwargs['distractor_size'], kwargs['distractor_color'])
+            stimuli_log = {}
         else:
-            element_size = 50
-            color = (255,255,255)
-        shape_distractor = self.select_shape()
-        shape_target = self.select_shape()
-        grid_list = self.calc_grid(element_size)
-        # random.shuffle(grid_list)
-        bg = self.background.copy()
-        for n, i in enumerate(grid_list):
-            if n==target_num:
-                # target object
-                bg = self.shape_draw(shape_target, bg, i[0], i[1], element_size, color)
-                target_x = i[0]
-                target_y = i[1]
+            size_list = [30, 40, 50, 60, 70]
+            color_task = ['hue', 'brightness']
+            color_level = ['very low', 'low', 'mid', 'high', 'very high']
+            if self.random_control==True:
+                element_size = random.choice(size_list)
+                color = self.random_color()
+                # color = self.convert_color(random.choice(color_task), random.choice(color_level))
             else:
-                bg= self.shape_draw(shape_distractor, bg, i[0], i[1], element_size, color)
-        stimuli_log = {'task':'shape', 'shape_target':shape_target, 'shape_distractor':shape_distractor,
-                       'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
-                       'distractor_size':element_size, 'target_color':color, 'distractor_color':color, 
-                       'target_orientation':None, 'distractor_orientation':None}
+                element_size = 50
+                color = (255,255,255)
+            shape_distractor = self.select_shape()
+            shape_target = self.select_shape()
+            grid_list = self.calc_grid(element_size)
+            # random.shuffle(grid_list)
+            bg = self.background.copy()
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    # target object
+                    bg = self.shape_draw(shape_target, bg, i[0], i[1], element_size, color)
+                    target_x = i[0]
+                    target_y = i[1]
+                else:
+                    bg= self.shape_draw(shape_distractor, bg, i[0], i[1], element_size, color)
+            stimuli_log = {'task':'shape', 'shape_target':shape_target, 'shape_distractor':shape_distractor,
+                        'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
+                        'distractor_size':element_size, 'target_color':color, 'distractor_color':color, 
+                        'target_orientation':None, 'distractor_orientation':None}
         return bg, stimuli_log
                 
-    def stimuli_size(self, target_num):
-        shape_list = [1,2,3,4,5]
-        color_task = ['hue', 'brightness']
-        color_level = ['very low', 'low', 'mid', 'high', 'very high']
-        if self.random_control==True:
-            shape = random.choice(shape_list)
-            color = self.random_color()
-            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
+    def stimuli_size(self, target_num, **kwargs):
+        # For re-generalize stimuli from the stimuli_log
+        if kwargs is not None and target_num is False:
+            self.set_set_size(kwargs['set_size'])
+            grid_list = self.calc_grid(kwargs['distractor_size'])
+            bg = self.background.copy()
+            target_num = self.take_targetnum(grid_list, kwargs['target_cnt'])
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    bg = self.shape_draw(kwargs['shape_target'], bg, i[0], i[1], kwargs['target_size'], kwargs['target_color'])
+                else:
+                    bg = self.shape_draw(kwargs['shape_distractor'], bg, i[0], i[1], kwargs['distractor_size'], kwargs['distractor_color'])
+            stimuli_log = {}
+
+        # For randomly generalize stimuli for user study
         else:
-            shape = 1
-            color = (255,255,255)
-        size_distractor = self.select_size()
-        size_target = self.select_size()
-        grid_list = self.calc_grid(size_distractor)
-        bg = self.background.copy()
-        for n, i in enumerate(grid_list):
-            if n==target_num:
-                # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], size_target, color)
-                target_x = i[0]
-                target_y = i[1]
+            shape_list = [1,2,3,4,5]
+            color_task = ['hue', 'brightness']
+            color_level = ['very low', 'low', 'mid', 'high', 'very high']
+            if self.random_control==True:
+                shape = random.choice(shape_list)
+                color = self.random_color()
+                # color = self.convert_color(random.choice(color_task), random.choice(color_level))
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], size_distractor, color)
-        stimuli_log = {'task':'size', 'shape_target':shape, 'shape_distractor':shape,
-                'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':size_target,
-                'distractor_size':size_distractor, 'target_color':color, 'distractor_color':color,
-                'target_orientation':None, 'distractor_orientation':None}
+                shape = 1
+                color = (255,255,255)
+            size_distractor = self.select_size()
+            size_target = self.select_size()
+            grid_list = self.calc_grid(size_distractor)
+            bg = self.background.copy()
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    # target object
+                    bg = self.shape_draw(shape, bg, i[0], i[1], size_target, color)
+                    target_x = i[0]
+                    target_y = i[1]
+                else:
+                    bg = self.shape_draw(shape, bg, i[0], i[1], size_distractor, color)
+            stimuli_log = {'task':'size', 'shape_target':shape, 'shape_distractor':shape,
+                    'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':size_target,
+                    'distractor_size':size_distractor, 'target_color':color, 'distractor_color':color,
+                    'target_orientation':None, 'distractor_orientation':None}
 
         return bg, stimuli_log
     
-    def stimuli_hue(self, target_num):
-        shape_list = [1,2,3,4,5]
-        size_list = [30, 40, 50, 60, 70]
-        if self.random_control==True:
-            element_size = random.choice(size_list)
-            shape = random.choice(shape_list)
+    def stimuli_hue(self, target_num, **kwargs):
+        # For re-generalize stimuli from the stimuli_log
+        if kwargs is not None and target_num is False:
+            self.set_set_size(kwargs['set_size'])
+            grid_list = self.calc_grid(kwargs['distractor_size'])
+            bg = self.background.copy()
+            target_num = self.take_targetnum(grid_list, kwargs['target_cnt'])
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    bg = self.shape_draw(kwargs['shape_target'], bg, i[0], i[1], kwargs['target_size'], kwargs['target_color'])
+                else:
+                    bg = self.shape_draw(kwargs['shape_distractor'], bg, i[0], i[1], kwargs['distractor_size'], kwargs['distractor_color'])
+            stimuli_log = {}
+
+        # For randomly generalize stimuli for user study
         else:
-            element_size = 50
-            shape = 1
-        hue = self.select_hue()
-        hue_level_distractor = self.select_hue_level()
-        color_distactor = self.convert_hue(hue, hue_level_distractor)
-        hue_level_target = self.select_hue_level()
-        color_target = self.convert_hue(hue, hue_level_target)
-        grid_list = self.calc_grid(element_size)
-        bg = self.background.copy()
-        for n, i in enumerate(grid_list):
-            if n==target_num:
-                # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
-                target_x = i[0]
-                target_y = i[1]
+            shape_list = [1,2,3,4,5]
+            size_list = [30, 40, 50, 60, 70]
+            if self.random_control==True:
+                element_size = random.choice(size_list)
+                shape = random.choice(shape_list)
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
-        stimuli_log = {'task':'hue', 'shape_target':shape, 'shape_distractor':shape,
-                'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
-                'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
-                'target_orientation':None, 'distractor_orientation':None}
+                element_size = 50
+                shape = 1
+            hue = self.select_hue()
+            hue_level_distractor = self.select_hue_level()
+            color_distactor = self.convert_hue(hue, hue_level_distractor)
+            hue_level_target = self.select_hue_level()
+            color_target = self.convert_hue(hue, hue_level_target)
+            grid_list = self.calc_grid(element_size)
+            bg = self.background.copy()
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    # target object
+                    bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
+                    target_x = i[0]
+                    target_y = i[1]
+                else:
+                    bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+            stimuli_log = {'task':'hue', 'shape_target':shape, 'shape_distractor':shape,
+                    'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
+                    'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
+                    'target_orientation':None, 'distractor_orientation':None}
 
         return bg, stimuli_log
 
-    def stimuli_brightness(self, target_num):
-        shape_list = [1,2,3,4,5]
-        size_list = [30, 40, 50, 60, 70]
-        if self.random_control==True:
-            element_size = random.choice(size_list)
-            shape = random.choice(shape_list)
+    def stimuli_brightness(self, target_num, **kwargs):
+        # For re-generalize stimuli from the stimuli_log
+        if kwargs is not None and target_num is False:
+            self.set_set_size(kwargs['set_size'])
+            grid_list = self.calc_grid(kwargs['distractor_size'])
+            bg = self.background.copy()
+            target_num = self.take_targetnum(grid_list, kwargs['target_cnt'])
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    bg = self.shape_draw(kwargs['shape_target'], bg, i[0], i[1], kwargs['target_size'], kwargs['target_color'])
+                else:
+                    bg = self.shape_draw(kwargs['shape_distractor'], bg, i[0], i[1], kwargs['distractor_size'], kwargs['distractor_color'])
+            stimuli_log = {}
+
+        # For randomly generalize stimuli for user study
         else:
-            element_size = 50
-            shape = 1
-        brightness_distractor = self.select_brightness_level()
-        color_distactor = self.convert_brightness(brightness_distractor)
-        brightness_target = self.select_brightness_level()
-        color_target = self.convert_brightness(brightness_target)
-        grid_list = self.calc_grid(element_size)
-        bg = self.background.copy()
-        for n, i in enumerate(grid_list):
-            if n==target_num:
-                # target object
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
-                target_x = i[0]
-                target_y = i[1]
+            shape_list = [1,2,3,4,5]
+            size_list = [30, 40, 50, 60, 70]
+            if self.random_control==True:
+                element_size = random.choice(size_list)
+                shape = random.choice(shape_list)
             else:
-                bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
-        stimuli_log = {'task':'brightness', 'shape_target':shape, 'shape_distractor':shape,
-                'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
-                'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
-                'target_orientation':None, 'distractor_orientation':None}
+                element_size = 50
+                shape = 1
+            brightness_distractor = self.select_brightness_level()
+            color_distactor = self.convert_brightness(brightness_distractor)
+            brightness_target = self.select_brightness_level()
+            color_target = self.convert_brightness(brightness_target)
+            grid_list = self.calc_grid(element_size)
+            bg = self.background.copy()
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    # target object
+                    bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_target)
+                    target_x = i[0]
+                    target_y = i[1]
+                else:
+                    bg = self.shape_draw(shape, bg, i[0], i[1], element_size, color_distactor)
+            stimuli_log = {'task':'brightness', 'shape_target':shape, 'shape_distractor':shape,
+                    'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
+                    'distractor_size':element_size, 'target_color':color_target, 'distractor_color':color_distactor,
+                    'target_orientation':None, 'distractor_orientation':None}
 
         return bg, stimuli_log
     
-    def stimuli_orientation(self, target_num):
-        size_list = [30, 40, 50, 60, 70]
-        color_task = ['hue', 'brightness']
-        color_level = ['very low', 'low', 'mid', 'high', 'very high']
-        if self.random_control==True:
-            element_size = random.choice(size_list)
-            color = self.random_color()
-            # color = self.convert_color(random.choice(color_task), random.choice(color_level))
+    def stimuli_orientation(self, target_num, **kwargs):
+        # For re-generalize stimuli from the stimuli_log
+        if kwargs is not None and target_num is False:
+            self.set_set_size(kwargs['set_size'])
+            grid_list = self.calc_grid(kwargs['distractor_size'])
+            bg = self.background.copy()
+            target_num = self.take_targetnum(grid_list, kwargs['target_cnt'])
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    bg = self.orientation(bg, i[0], i[1], kwargs['target_size'], kwargs['target_orientation'], kwargs['target_color'])
+                else:
+                    bg = self.orientation(bg, i[0], i[1], kwargs['target_size'], kwargs['distractor_orientation'], kwargs['target_color'])
+            stimuli_log = {}
+
+        # For randomly generalize stimuli for user study
         else:
-            element_size = 50
-            color = (255,255,255)
-        orientation_distractor = self.select_orientation()
-        orientation_target = self.select_orientation()
-        grid_list = self.calc_grid(element_size)
-        bg = self.background.copy()
-        for n, i in enumerate(grid_list):
-            if n==target_num:
-                # target object
-                bg = self.orientation(bg, i[0], i[1], element_size, orientation_target, color)
-                target_x = i[0]
-                target_y = i[1]
+            size_list = [30, 40, 50, 60, 70]
+            color_task = ['hue', 'brightness']
+            color_level = ['very low', 'low', 'mid', 'high', 'very high']
+            if self.random_control==True:
+                element_size = random.choice(size_list)
+                color = self.random_color()
+                # color = self.convert_color(random.choice(color_task), random.choice(color_level))
             else:
-                bg = self.orientation(bg, i[0], i[1], element_size, orientation_distractor, color)
-        stimuli_log = {'task':'orientation', 'shape_target':'orientation', 'shape_distractor':'orientation',
-                'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
-                'distractor_size':element_size, 'target_color':color, 'distractor_color':color,
-                'target_orientation':orientation_target, 'distractor_orientation':orientation_distractor}
+                element_size = 50
+                color = (255,255,255)
+            orientation_distractor = self.select_orientation()
+            orientation_target = self.select_orientation()
+            grid_list = self.calc_grid(element_size)
+            bg = self.background.copy()
+            for n, i in enumerate(grid_list):
+                if n==target_num:
+                    # target object
+                    bg = self.orientation(bg, i[0], i[1], element_size, orientation_target, color)
+                    target_x = i[0]
+                    target_y = i[1]
+                else:
+                    bg = self.orientation(bg, i[0], i[1], element_size, orientation_distractor, color)
+            stimuli_log = {'task':'orientation', 'shape_target':'orientation', 'shape_distractor':'orientation',
+                    'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
+                    'distractor_size':element_size, 'target_color':color, 'distractor_color':color,
+                    'target_orientation':orientation_target, 'distractor_orientation':orientation_distractor}
 
         return bg, stimuli_log
 
@@ -479,6 +551,11 @@ class PreattentiveObject:
             elif level == 'very high':
                 color = (255, 255, 255)
         return color
+
+    def take_targetnum(self, grid_list, target_cnt:tuple):
+        _target_cnt = list(map(int, target_cnt))
+        target_num = grid_list.index(_target_cnt)
+        return target_num
         
 if __name__=='__main__':
     myPreattentiveObject = PreattentiveObject(1280,1080,254)

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import json
+import numpy as np
 
 class TaskStimuliData:
     def __init__(self, datapath, filename) -> None:
@@ -24,6 +25,23 @@ class TaskStimuliData:
             return self.df[self.df['Trial']==trial]
         else:
             return self.df[(self.df['Trial']==trial)&(self.df['Block']==block)]
+
+class HitStimuliAnalysis:
+    def __init__(self, data: pd.DataFrame):
+        self.data = data
+        self.timestart = self.data['Recording timestamp [μs]'][0]
+
+    def differential(self, column_name):
+        self.data[f'diff_{column_name}'] = self.data.apply(lambda x: self.divide(x[f'{column_name}'], x['Recording timestamp [μs]']), axis=1)
+        return self.data[f'diff_{column_name}']
+    
+    def divide(self, a, b):
+        if a == np.nan or b == np.nan or b == 0:
+            return np.nan
+        else:
+            return a/b
+
+
 
 
 class MetaAnalysis:
@@ -62,35 +80,43 @@ class MetaAnalysis:
 
         elif self.task == 'orientation':
             level_mapping = {-30:1, -15:2, 0:3, 15:4, 30:5}
-            target = level_mapping[tuple(self.data['target_orientation'])]
-            distractor = level_mapping[tuple(self.data['distractor_orientation'])]
+            target = level_mapping[self.data['target_orientation']]
+            distractor = level_mapping[self.data['distractor_orientation']]
 
         return f"{target}-{distractor}"
 
+    def get_task(self):
+        return self.task
+    
+    def get_cnt(self):
+        return self.data['target_cnt']
+
+    def get_aoi(self):
+        return self.data['area']
 
 
 if __name__ == '__main__':
 
 
-    examplejson = {'task': 'hue',
-                    'shape_target': 'orientation',
-                    'shape_distractor': 'orientation',
-                    'set_size': 6,
-                    'target_cnt': [1235, 375],
-                    'target_size': 50,
-                    'distractor_size': 50,
-                    'target_color': [82, 127, 62],
-                    'distractor_color': [82, 127, 62],
-                    'target_orientation': 15,
-                    'distractor_orientation': 0,
-                    'features': 'features/In-Taek_2023-03-20_10\uf02216\uf02256_task1.csv'}
+    # examplejson = {'task': 'hue',
+    #                 'shape_target': 'orientation',
+    #                 'shape_distractor': 'orientation',
+    #                 'set_size': 6,
+    #                 'target_cnt': [1235, 375],
+    #                 'target_size': 50,
+    #                 'distractor_size': 50,
+    #                 'target_color': [82, 127, 62],
+    #                 'distractor_color': [82, 127, 62],
+    #                 'target_orientation': 15,
+    #                 'distractor_orientation': 0,
+    #                 'features': 'features/In-Taek_2023-03-20_10\uf02216\uf02256_task1.csv'}
     
-    {"task": "size", "shape_target": 1, "shape_distractor": 1, "set_size": 6, "target_cnt": [1245, 483], 
-    "target_size": 60, "distractor_size": 30, "target_color": [82, 127, 62], "distractor_color": [82, 127, 62], 
-    "target_orientation": 'null', "distractor_orientation": 'null'},
+    # {"task": "size", "shape_target": 1, "shape_distractor": 1, "set_size": 6, "target_cnt": [1245, 483], 
+    # "target_size": 60, "distractor_size": 30, "target_color": [82, 127, 62], "distractor_color": [82, 127, 62], 
+    # "target_orientation": 'null', "distractor_orientation": 'null'},
 
-    myMeta = MetaAnalysis(examplejson)
-    print(myMeta.get_level())
+    # myMeta = MetaAnalysis(examplejson)
+    # print(myMeta.get_level())
 
     # hit_path = os.path.join(os.getcwd(), 'data', 'features_hit')
     # participatns = ['chungha','dongik','eunhye','In-Taek','jooyeong','juchanseo','junryeol','juyeon',
@@ -101,4 +127,8 @@ if __name__ == '__main__':
     # print(data.get_df(block='B-C'))
     # for file in filelist:
         # TaskStimuliData(hit_path, file)
+
+    data = pd.read_csv('data/AOI_HitScoring/IdentiGaze_Processed Data/chungha/2023-03-20_14_07_20_task2/1_hit.csv')
+    myhit = HitStimuliAnalysis(data)
+    print(myhit.differential('Recording timestamp [μs]'))
     
