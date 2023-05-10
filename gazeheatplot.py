@@ -167,13 +167,13 @@ def draw_heatmap(gazepoints, dispsize, imagefile=None, alpha=0.5, savefilename=N
     # FINISH PLOT
     # invert the y axis, as (0,0) is top left on a display
     ax.invert_yaxis()
-    pyplot.show()
+    # pyplot.show()
 
     # save the figure if a file name was provided
     if savefilename != None:
         fig.savefig(savefilename)
 
-    return fig
+    return heatmap
 
 
 if __name__=='__main__':

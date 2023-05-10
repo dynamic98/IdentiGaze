@@ -75,7 +75,10 @@ def hue_heatmap(color:str, img:np.array, alpha=0.5, gaussianwh=200, gaussiansd=N
 
 if __name__=='__main__':
     preattentive_object = PreattentiveObject(1920, 1080, 'black')
-    log_example = {"task": "size", "shape_target": 1, "shape_distractor": 1, "set_size": 6, "target_cnt": [1245, 483], "target_size": 60, "distractor_size": 30, "target_color": [82, 127, 62], "distractor_color": [82, 127, 62], "target_orientation": None, "distractor_orientation": None, "features": "features/eunhye_1 session_task 0.5.csv", "area": [1145, 383, 1345, 583]}
+    log_example = {"task": "size", "shape_target": 1, "shape_distractor": 1, "set_size": 6, "target_cnt": [1245, 483], "target_size": 60, 
+                   "distractor_size": 30, "target_color": [82, 127, 62], "distractor_color": [82, 127, 62], "target_orientation": None, 
+                   "distractor_orientation": None, "features": "features/eunhye_1 session_task 0.5.csv", "area": [1145, 383, 1345, 583]}
     rgb_bg = re_generate_stimuli(preattentive_object, log_example)
     hue_heatmap(color='r', img=rgb_bg)
+
 
