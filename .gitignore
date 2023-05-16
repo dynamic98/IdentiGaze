@@ -152,3 +152,7 @@ cython_debug/
 #.idea/
 .zip
 exe_created
+feature_analysis
+ml-results
+familiar
+data

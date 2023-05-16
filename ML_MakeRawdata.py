@@ -77,6 +77,13 @@ def get_gazeXY_for_heatmap(df: pd.DataFrame):
         xy_list.append([int(x_data[i]), int(y_data[i]),1])
     return xy_list
 
+def bool_hit(df:pd.DataFrame):
+    hit_data = df['gaze hit']
+    if 'hit' in hit_data.tolist():
+        return 1
+    else:
+        return 0
+
 if __name__ == '__main__':
     participant_dict = {'chungha': '8', 'dongik': '7', 'eunhye': '1', 'In-Taek': '5', 'jooyeong': '13', 'juchanseo': '3', 'junryeol': '11', 
                         'juyeon': '4', 'myounghun': '9', 'songmin': '10', 'sooyeon': '6', 'woojinkang': '2', 'yeogyeong': '12'}
@@ -89,7 +96,8 @@ if __name__ == '__main__':
     for participant in participant_dict:
         p_tasklist = sorted(os.listdir(os.path.join(processed_datadir_path, participant)))
         p_tasklist.remove('.DS_Store')
-        for idx, foldername in enumerate(p_tasklist):
+        print(participant)
+        for idx, foldername in tqdm(enumerate(p_tasklist)):
             session, task = decide_session_and_task(idx, foldername)
             feature_log_path = os.path.join(logdir_path, f'P{participant_dict[participant]}_{participant}',session, task)
             log_json = feature_load(feature_log_path)
@@ -102,8 +110,10 @@ if __name__ == '__main__':
                 cnt_x , cnt_y = meta.get_cnt()
                 bbx_x1, bbx_y1, bbx_x2, bbx_y2 = meta.get_aoi()
                 bc_stimuli = slice_stimuli(data_df, task)
-                data_dict = get_gazeXY(bc_stimuli)
+                hit = bool_hit(bc_stimuli)
 
+                data_dict = get_gazeXY(bc_stimuli)
+                data_dict['gaze_hit'] = hit
                 data_dict['cnt_x'] = cnt_x
                 data_dict['cnt_y'] = cnt_y
                 data_dict['bbx_x1'] = bbx_x1
@@ -125,8 +135,13 @@ if __name__ == '__main__':
                 data_dict['distractor_color_b'] = meta_data['distractor_color'][0]
                 data_dict['distractor_color_g'] = meta_data['distractor_color'][1]
                 data_dict['distractor_color_r'] = meta_data['distractor_color'][2]
-                data_dict['target_orientation'] = meta_data['target_orientation']
-                data_dict['distractor_orientation'] = meta_data['distractor_orientation']
+
+                if meta_data['distractor_orientation'] == None:
+                    data_dict['target_orientation'] = 0
+                    data_dict['distractor_orientation'] = 0
+                else:
+                    data_dict['distractor_orientation'] = meta_data['distractor_orientation']
+                    data_dict['target_orientation'] = meta_data['target_orientation']
                 this_df = pd.DataFrame(data_dict, index=[0])
                 if task == 'task 0.7':
                     whole_dataframe_task2 = pd.concat([whole_dataframe_task2, this_df])
