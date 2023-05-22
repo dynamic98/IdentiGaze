@@ -93,6 +93,15 @@ class MetaAnalysis:
 
     def get_aoi(self):
         return self.data['area']
+    
+    def get_real_bbx(self):
+        cnt_x, cnt_y = self.data['target_cnt']
+        radius = float(self.data['target_size'])/2
+        bbx_x1 = int(float(cnt_x)-radius)
+        bbx_x2 = int(float(cnt_x)+radius)
+        bbx_y1 = int(float(cnt_y)-radius)
+        bbx_y2 = int(float(cnt_y)+radius)
+        return [bbx_x1, bbx_y1, bbx_x2, bbx_y2]
 
 
 if __name__ == '__main__':
