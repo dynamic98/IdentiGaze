@@ -22,12 +22,12 @@ def similarity_encoding(similarity):
     return difference
 
 def normalize_cm(cm: np.array):
-    new_cm = np.zeros_like(cm)
+    new_cm = np.zeros_like(cm, dtype=np.float_)
     cm_sum_list = cm.sum(axis=1)
     cm_length = len(cm_sum_list)
     for i in range(cm_length):
         for j in range(cm_length):
-            new_cm[i,j] = round(cm[i,j]/cm_sum_list[i], 4)
+            new_cm[i,j] = (float(cm[i,j])/float(cm_sum_list[i]))
     return new_cm
 
 def average(datalist):
@@ -41,7 +41,8 @@ def average(datalist):
 def stack_ydata_from_same(y_data, stack):
     # 일단 들어온 y_data를 label dict에 할당시켜줌
     # stack으로 묶을 때 label이 같은 것끼리 묶어야 하기 때문임
-    label_dict = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[]}
+
+    label_dict = {k:[] for k in list(set(y_data))}
     for index,label in enumerate(y_data):
         label_dict[label].append(index)
     
@@ -60,10 +61,9 @@ def stack_ydata_from_same(y_data, stack):
     return stack_index, stack_y
 
 def stack_ydata_from_same_combinations(y_data, stack):
-    label_dict = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[]}
+    label_dict = {k:[] for k in list(set(y_data))}
     for index,label in enumerate(y_data):
         label_dict[label].append(index)
-    
     stack_y = []
     for n, label in enumerate(label_dict):
         index_list = label_dict[label]
@@ -79,10 +79,9 @@ def stack_ydata_from_same_combinations(y_data, stack):
 
 def stack_ydata_from_each_combinations(y_data, index1, index2, index3):
     # stack = 3
-    label1_dict = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[]}
-    label2_dict = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[]}
-    label3_dict = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[],12:[],13:[]}
-
+    label1_dict = {k:[] for k in list(set(y_data))}
+    label2_dict = {k:[] for k in list(set(y_data))}
+    label3_dict = {k:[] for k in list(set(y_data))}
     for index,label in enumerate(y_data):
         if index in index1:
             label1_dict[label].append(index)
@@ -95,7 +94,7 @@ def stack_ydata_from_each_combinations(y_data, index1, index2, index3):
 
     stack_y = []
     for n in range(13):
-        label = n+1
+        label = n
         index_list = [label1_dict[label], label2_dict[label], label3_dict[label]]
         stack_array = cartesian(index_list).T
         _, stack_size = stack_array.shape
@@ -106,6 +105,78 @@ def stack_ydata_from_each_combinations(y_data, index1, index2, index3):
             stack_index = np.concatenate((stack_index, stack_array),axis=1)
     return stack_index, stack_y
 
+def stack_ydata_from_anything(y_data, index1, index2, index3):
+    # stack = 3
+    label1_dict = {k:[] for k in list(set(y_data))}
+    label2_dict = {k:[] for k in list(set(y_data))}
+    label3_dict = {k:[] for k in list(set(y_data))}
+    for index,label in enumerate(y_data):
+        if index in index1:
+            label1_dict[label].append(index)
+
+        if index in index2:
+            label2_dict[label].append(index)
+        
+        if index in index3:
+            label3_dict[label].append(index)
+
+    firstOne = label1_dict[0][0]
+    secondOne = label2_dict[0][0]
+    thirdOne = label3_dict[0][0]
+    stack_y = []
+
+    if (firstOne == secondOne) & (firstOne != thirdOne):
+        for n in range(13):
+            stackCombination = np.array(list(itertools.combinations(label1_dict[n], 2)))
+            stackCombination = cartesian2Stack([stackCombination, label3_dict[n]]).T
+            _, stack_size = stackCombination.shape
+            stack_y.extend([n for _ in range(stack_size)])
+            if n == 0:
+                stack_index = stackCombination
+            else:
+                stack_index = np.concatenate((stack_index, stackCombination),axis=1)
+    elif (firstOne == thirdOne) & (firstOne != secondOne):
+        for n in range(13):
+            stackCombination = np.array(list(itertools.combinations(label1_dict[n], 2)))
+            stackCombination = cartesian2Stack([stackCombination, label2_dict[n]]).T
+            stackCombination = np.vstack([stackCombination[0], stackCombination[2], stackCombination[1]])
+            _, stack_size = stackCombination.shape
+            stack_y.extend([n for _ in range(stack_size)])
+            if n == 0:
+                stack_index = stackCombination
+            else:
+                stack_index = np.concatenate((stack_index, stackCombination),axis=1)
+    elif (thirdOne == secondOne) & (thirdOne != firstOne):
+        for n in range(13):
+            stackCombination = np.array(list(itertools.combinations(label3_dict[n], 2)))
+            stackCombination = cartesian2Stack([stackCombination, label1_dict[n]]).T
+            stackCombination = np.vstack([stackCombination[2], stackCombination[1], stackCombination[0]])
+            _, stack_size = stackCombination.shape
+            stack_y.extend([n for _ in range(stack_size)])
+            if n == 0:
+                stack_index = stackCombination
+            else:
+                stack_index = np.concatenate((stack_index, stackCombination),axis=1)
+    elif (firstOne != secondOne) & (firstOne != secondOne):
+        for n in range(13):
+            stackCombination = cartesian([label1_dict[n], label2_dict[n], label3_dict[n]]).T
+            _, stack_size = stackCombination.shape
+            stack_y.extend([n for _ in range(stack_size)])
+            if n == 0:
+                stack_index = stackCombination
+            else:
+                stack_index = np.concatenate((stack_index, stackCombination),axis=1)
+    elif (firstOne == secondOne == thirdOne):
+        for n in range(13):
+            stackCombination = np.array(list(itertools.combinations(label1_dict[n], 3))).T
+            _, stack_size = stackCombination.shape
+            stack_y.extend([n for _ in range(stack_size)])
+            if n == 0:
+                stack_index = stackCombination
+            else:
+                stack_index = np.concatenate((stack_index, stackCombination),axis=1)
+    return stack_index, stack_y
+
 
 def latefusion(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_y):
     stack, total_stack_size = stack_index.shape
@@ -113,8 +184,9 @@ def latefusion(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_
     multiply_predict = []
     max_predict = []
     probabilities = clf.predict_proba(x_data)
-    
-    for i in tqdm(range(total_stack_size)):
+    yLabel = list(set(stack_y))
+
+    for i in range(total_stack_size):
         # probabilities = clf.predict_proba(x_data[stack_index[:,i]])
         plus = np.zeros((1,13))
         multiply = np.ones((1,13))
@@ -124,9 +196,9 @@ def latefusion(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_
             plus = plus + np.array(this_probabilities)
             multiply = multiply * np.array(this_probabilities)
             maximum = list(map(max, maximum, this_probabilities))
-        plus_predict.append(np.argmax(plus)+1)
-        multiply_predict.append(np.argmax(multiply)+1)
-        max_predict.append(np.argmax(maximum)+1)
+        plus_predict.append(yLabel[np.argmax(plus)])
+        multiply_predict.append(yLabel[np.argmax(multiply)])
+        max_predict.append(yLabel[np.argmax(maximum)])
 
     cm_plus = confusion_matrix(stack_y, plus_predict)
     cm_multiply = confusion_matrix(stack_y, multiply_predict)
@@ -152,6 +224,33 @@ def latefusion(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_
     }
 
     return results
+
+def latefusionVerification(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_y, targetY):
+    stack, total_stack_size = stack_index.shape
+    multiply_predict = []
+    probabilities = clf.predict_proba(x_data)
+    yLabel = list(set(stack_y))
+
+    for i in range(total_stack_size):
+        # probabilities = clf.predict_proba(x_data[stack_index[:,i]])
+        multiply = np.ones((1,13))
+        for j in range(stack):
+            this_probabilities = probabilities[stack_index[j,i]]
+            multiply = multiply * np.array(this_probabilities)
+        print(multiply[0][targetY], targetY, np.argmax(multiply))
+
+    #     multiply_predict.append(yLabel[np.argmax(multiply)])
+    # cm_multiply = confusion_matrix(stack_y, multiply_predict)
+    # acc_multiply = accuracy_score(stack_y, multiply_predict)
+    # precision_multiply = precision_score(stack_y, multiply_predict, average='macro')
+    # f1_multiply = f1_score(stack_y, multiply_predict, average='macro')
+    # results = {
+    #    'cm_multiply':cm_multiply, 'acc_multiply':acc_multiply,
+    #    'precision_multiply':precision_multiply, 'f1_multiply':f1_multiply
+    # }
+
+    # return results
+
 
 def visualize_cm(cm, clf_name:str, title:str, path='', iv=False):
     length_cm = cm.shape[0]
@@ -218,6 +317,22 @@ def cartesian(arrays, out=None):
             out[j*m:(j+1)*m, 1:] = out[0:m, 1:]
     return out
 
+def cartesian2Stack(arrays, out=None):
+    arrays = [np.asarray(x) for x in arrays]
+    dtype = arrays[0].dtype
+    n = np.prod([x.shape[0] for x in arrays])
+    if out is None:
+        out = np.zeros([n, 3], dtype=dtype)
+
+    m = int(n / arrays[0].shape[0])
+    # print(np.repeat(arrays[0], m, axis=0))
+    out[:,:2] = np.repeat(arrays[0], m, axis=0)
+    for j in range(0, arrays[0].shape[0]):
+        out[j*m:(j+1)*m, 2] = arrays[1]
+
+    return out
+
+
 def bracket2array(arraylike_string:str):
     result = []
     line_slice = arraylike_string.split(']\n')
@@ -240,6 +355,35 @@ def resize_img(img):
     resize_img = cv2.resize(img, dsize=(200,200), interpolation=cv2.INTER_AREA )
     img_arr = np.array(resize_img,dtype=np.float_)
     return img_arr
+
+def BiometricEvaluation(confusionMatrix, targetLabel, metric:str):
+    totalValue = np.sum(confusionMatrix)
+    tp = confusionMatrix[targetLabel, targetLabel]
+    fn = confusionMatrix[targetLabel,:].sum() - tp
+    fp = confusionMatrix[:,targetLabel].sum() - tp
+    tn = totalValue - (tp+fn+fp)
+    if metric == 'FAR':
+        return fp/(fp+tn)
+    elif metric == 'FRR':
+        return fn/(fn+tp)
+
+def accuracyMeasurementForVerification(confusionMatrix, targetLabel):
+    totalValue = np.sum(confusionMatrix)
+    tp = confusionMatrix[targetLabel, targetLabel]
+    fn = confusionMatrix[targetLabel,:].sum() - tp
+    fp = confusionMatrix[:,targetLabel].sum() - tp
+    tn = totalValue - (tp+fn+fp)
+    return (tp+tn)/totalValue
+
+def accuracyMeasurement(confusionMatrix):
+    labelAmount,_ = confusionMatrix.shape
+    diagonalValue = 0
+    totalValue = np.sum(confusionMatrix)
+    for i in range(labelAmount):
+        diagonalValue += confusionMatrix[i,i]
+    return diagonalValue/totalValue
+
+
 
 if __name__ == '__main__':
     pass

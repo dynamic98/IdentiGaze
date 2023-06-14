@@ -37,52 +37,32 @@ class LoadMediumData(LoadBlueRawData):
         y_data = self.take_y()
 
         warnings.filterwarnings('ignore')
-        base_model = DummyClassifier(strategy='most_frequent', random_state=0)  # ZeroR
-        svc_model = SVC()  # SVM
-        knn_model = KNeighborsClassifier()  # k-Nearest Neighbors
-        lr_model = LogisticRegression(C=1, random_state=0)  # Logistic Regression
-        dt_model = DecisionTreeClassifier()  # Decision Tree
-        rf_model = RandomForestClassifier(random_state=0)  # Random Forest
-        ab_model = AdaBoostClassifier()  # AdaBoost
-        nb_model = GaussianNB()  # Naive Bayse
-        
-        clf_names = ['ZeroR', 'DecisionTree',  'NaiveBayes', 'AdaBoost', 'RandomForest']
-        classifiers = [base_model, dt_model,  nb_model, ab_model, rf_model]
+        clf = RandomForestClassifier(random_state=0)  # Random Forest
         results = {}
-        for n, clf in enumerate(classifiers):
-            print("==================================")
-            print(clf_names[n])
+        print("==================================")
+        X = x_data.to_numpy()
+        Y = y_data.to_numpy()
+        kf = StratifiedKFold(n_splits=10)
+        cm_added = np.zeros((13,13))
+        f1 = []
+        precision = []
+        accuracy = []
+        for _, (train, test) in enumerate(kf.split(X, Y)):
             clf2 = clone(clf)
-            X = x_data.to_numpy()
-            Y = y_data.to_numpy()
-            kf = StratifiedKFold(n_splits=10)
-            cm_added = np.zeros((13,13))
-            f1 = []
-            precision = []
-            accuracy = []
-            for i, (train, test) in enumerate(kf.split(X, Y)):
-                train_x = X[train]
-                train_y = Y[train]
-                test_x = X[test]
-                test_y = Y[test]
-                clf2.fit(train_x, train_y)
-                predict_y = clf2.predict(test_x)
-                # for i in tqdm(range(len(test))):
-                #     this_predict = predict_y[i]
-                #     this_gt = test_y[i]
-                #     this_index = self.get_indexlist()[test[i]]
-                #     this_meta = self.take_meta(this_index)
-                #     self.log_dict[f"true_{this_gt}"][f"pred_{this_predict}"].append(this_meta)
-                #     y_pred = clf2.predict(test_x)
-                #     y_true = test_y
-                
-                cm_added = np.add(cm_added, confusion_matrix(test_y, predict_y))
-                f1.append(f1_score(test_y, predict_y, average=None).tolist())
-                precision.append(precision_score(test_y, predict_y, average=None).tolist())
-                accuracy.append(accuracy_score(test_y, predict_y).tolist()) 
-                # print(confusion_matrix(y_true, y_pred))
-            results[clf_names[n]] = {'confusion_matrix': cm_added.tolist(), 'precision': precision, 'accuracy': accuracy, 'f1':f1}
-            visualize_cm(cm_added, clf_name=clf_names[n], path='ml-results/medium',title="stack1")
+            train_x = X[train]
+            train_y = Y[train]
+            test_x = X[test]
+            test_y = Y[test]
+            clf2.fit(train_x, train_y)
+            predict_y = clf2.predict(test_x)
+            
+            cm_added = np.add(cm_added, confusion_matrix(test_y, predict_y))
+            f1.append(f1_score(test_y, predict_y, average=None).tolist())
+            precision.append(precision_score(test_y, predict_y, average=None).tolist())
+            accuracy.append(accuracy_score(test_y, predict_y).tolist()) 
+
+        results['rf'] = {'confusion_matrix': cm_added.tolist(), 'precision': precision, 'accuracy': accuracy, 'f1':f1}
+            # visualize_cm(cm_added, clf_name=clf_names[n], path='ml-results/medium',title="stack1")
             # print(precision)
             # print(accuracy)
             # print(f1)

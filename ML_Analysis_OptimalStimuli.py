@@ -55,9 +55,9 @@ class LoadSelectiveData:
         valid_data_block = []
         test_data_block = []
 
-        train_data_index = [0,1,2,3]
-        valid_data_index = [4,5,6]
-        test_data_index = [7,8,9]
+        train_data_index = list(range(0, int(train_data_ratio*10)))
+        valid_data_index = list(range(int(train_data_ratio*10), int((train_data_ratio+valid_data_ratio)*10)))
+        test_data_index = list(range(int((train_data_ratio+valid_data_ratio)*10), 10))
 
         for i in range(10):
             if i in train_data_index:
@@ -98,7 +98,7 @@ class LoadSelectiveData:
 
         for i in range(13):
             for j in range(13):
-                this_data = log_dict[f"true_{i+1}"][f"pred_{j+1}"]
+                this_data = log_dict[f"true_{i}"][f"pred_{j}"]
                 for meta in this_data:
                     if meta['task'] == 'shape':
                         shape_cm[i,j] += 1
@@ -124,7 +124,7 @@ class LoadSelectiveData:
             this_dict = {}
             for cm in cm_identify_dict:
                 this_dict[cm] = cm_identify_dict[cm][i,i]
-            jspirit_dict[i+1] = this_dict
+            jspirit_dict[i] = this_dict
 
         jspirit_sorted_dict = {}
         for i in jspirit_dict:
@@ -134,26 +134,35 @@ class LoadSelectiveData:
     def ml_test_strategy(self, model:RandomForestClassifier, strategy_dict, test_data_block):
         total_x = self.take_x().to_numpy()[test_data_block]
         total_y = self.take_y().to_numpy()[test_data_block]
-        for participant in range(1,3):
+        totalResults = {}
+        for participant in range(13):
             this_data = strategy_dict[participant]
-            stack_index, stack_y = stack_ydata_from_each_combinations(total_y, this_data[0], this_data[1], this_data[2])
+            stack_index, stack_y = stack_ydata_from_anything(total_y, this_data[0], this_data[1], this_data[2])
             results = latefusion(model, total_x, stack_index, stack_y)
-            with open(f"ml-results/latefusion/from cm/strategy1/participant_{participant}.json", "w") as f:
-                json.dump(results, f, default=str)
-            # visualize_cm(normalize_cm(np.array(results['cm_multiply'], dtype=np.single)), clf_name='randomforest_stack3', title=participant, path='strategy1')
-            print(f'participant {participant}')
-            gc.collect()
-        return 0
+            totalResults[f"participant_{participant}"] = results
+        return totalResults
+
+    def ml_test_strategy_verification(self, model:RandomForestClassifier, strategy_dict, test_data_block):
+        total_x = self.take_x().to_numpy()[test_data_block]
+        total_y = self.take_y().to_numpy()[test_data_block]
+        totalResults = {}
+        for participant in range(13):
+            this_data = strategy_dict[participant]
+            stack_index, stack_y = stack_ydata_from_anything(total_y, this_data[0], this_data[1], this_data[2])
+            results = latefusionVerification(model, total_x, stack_index, stack_y, participant)
+            totalResults[f"participant_{participant}"] = results
+        return totalResults
+
 
     def ml_test_baseline(self, model:RandomForestClassifier, test_data_block):
         total_x = self.take_x().to_numpy()[test_data_block]
         total_y = self.take_y().to_numpy()[test_data_block]
-        stack_index, stack_y = stack_ydata_from_same(total_y, 3)
+        stack_index, stack_y = stack_ydata_from_same_combinations(total_y, 3)
         results = latefusion(model, total_x, stack_index, stack_y)
-        with open(f"ml-results/latefusion/from cm/strategy_baseline/total_result.json", "w") as f:
-            json.dump(results, f, default=str)
+        # with open(f"ml-results/latefusion/from cm/strategy_baseline/total_result.json", "w") as f:
+        #     json.dump(results, f, default=str)
         # visualize_cm(normalize_cm(np.array(results['cm_multiply'], dtype=np.single)), clf_name='randomforest_stack3', title=participant, path='strategy1')
-        return 0
+        return results
 
     def stimuli_strategy1(self, jspirit_dict:dict, test_data_block):
         # strategy with taking three top contenders (3 serial stimuli)
@@ -181,6 +190,78 @@ class LoadSelectiveData:
                     this_data = orientation_data.index.to_list()
                 strategy_dict[i].append(this_data)
         return strategy_dict
+
+    def stimuli_strategy2(self, confusionMatrixDict:dict, test_data_block):
+        # strategy with taking three top contenders (3 serial stimuli)
+        test_data = self.data.iloc[test_data_block].reset_index()
+        shape_data = test_data.loc[test_data['task']=='shape']
+        size_data = test_data.loc[test_data['task']=='size']
+        hue_data = test_data.loc[test_data['task']=='hue']
+        brightness_data = test_data.loc[test_data['task']=='brightness']
+        orientation_data = test_data.loc[test_data['task']=='orientation']
+
+
+        result=[]
+        duplicated_order_vc=[]
+        for part_main in range(0, 13):
+            
+            order_temp=[]
+            temp_list=[]
+            # print(task_cm_total)
+            for vc in ["shape", "size", "orientation", "hue", "brightness"]:
+                # print(task_cm_total[vc][part_main])
+                for part in range(13):
+                    if part_main==part:
+                        pass
+                    else:
+                        # 비교할 participant&vc  list-up
+                        temp_list.append([part, vc, confusionMatrixDict[vc][part_main][part]])
+            # 본인과 가장 유사한 participant의 가장 잘 구분되는 vc 찾기 
+            temp_list=sorted(temp_list, key=lambda x:x[2], reverse=True)
+            while (len(temp_list)!=0):
+                # print(temp_list)
+                similar_participant=temp_list[0][0]
+                vc_candidate=list(filter(lambda x:x[0]==similar_participant, temp_list))
+                # print(vc_candidate)
+                order_temp.append(vc_candidate[-1][1])
+                new_list=[x for x in temp_list if (x not in vc_candidate) ]
+                temp_list=new_list
+                # print(temp_list)
+            duplicated_order_vc.append(order_temp)
+
+        # # 가장 유사한 participant 순으로 구분이 용이한 vc 
+        # print("\n 중복 vc")
+        # for item in duplicated_order_vc:
+        #     print(item)
+
+        # 가장 유사한 participant 순으로 구분이 용이한 vc [중복 제거]
+        # order_vc=[]
+        # for duplicated_item in duplicated_order_vc:
+        #     duplicated_set=set(duplicated_item)
+        #     order_vc.append(list(duplicated_set))
+
+        # print("\n 중복 제거된 vc")
+        # for item in order_vc:
+        #     print(item)
+
+        strategy_dict = {}
+        for i in range(13):
+            strategy_dict[i] = []
+            participant_dominance = duplicated_order_vc[i]
+            for j in range(3):
+                if participant_dominance[j] == 'shape':
+                    this_data = shape_data.index.to_list()
+                elif participant_dominance[j] == 'size':
+                    this_data = size_data.index.to_list()
+                elif participant_dominance[j] == 'hue':
+                    this_data = hue_data.index.to_list()
+                elif participant_dominance[j] == 'brightness':
+                    this_data = brightness_data.index.to_list()
+                elif participant_dominance[j] == 'orientation':
+                    this_data = orientation_data.index.to_list()
+                strategy_dict[i].append(this_data)
+        return strategy_dict
+
 
     def each_stimuli_data(self, test_data_block):
         test_data = self.data.iloc[test_data_block]
@@ -221,68 +302,33 @@ class LoadSelectiveData:
         return self.data.index.to_list()
 
 if __name__ == '__main__':
-    gc.collect()
-    path = 'data/blue_medium_data_task1.csv'
-    # path = 'data/blue_rawdata_task2.csv'
-    # train + valid + test should be equal 1
-    train_data_ratio = 0.4
-    valid_data_ratio = 0.3
-    test_data_ratio = 0.3
+    path = "data/BlueMediumRarePupil_task1-1.csv"
+    thisData = LoadSelectiveData(path)
+    train_data_ratio = 0.6
+    valid_data_ratio = 0.2
+    test_data_ratio = 0.2
 
-
-    # """
-    mydata = LoadSelectiveData(path)
-    trb, vdb, teb = mydata.split_data(train_data_ratio, valid_data_ratio, test_data_ratio)
-    # model = mydata.ml_train(trb)
-    # json_data, jspirit_data_dict = mydata.ml_validate(model, vdb)
-
-    print(mydata.take_y().describe())
-
-    # for i in jspirit_data_dict:
-        # print(list(jspirit_data_dict[i].keys()))
-    
-    # Validation Accuracy Analysis
-    # data_path = 'ml-results/latefusion/from cm'
-    # with open(os.path.join(data_path, 'validation_result.json'), 'r') as f:
-    #     json_data = json.load(f)
-    # for vc in ['shape', 'size', 'brightness', 'hue', 'orientation']:
-    #     # cm = bracket2array(json_data[vc])
-    #     cm = json_data[vc]
-    #     visualize_cm(cm, clf_name='randomforest_stack3', title=f"validation_{vc}", path='medium_', iv=False)
-
-
-    # strategy baseline (random)
-    # mydata.ml_test_baseline(model, teb)
-    # data_path = 'ml-results/latefusion/from cm/strategy_baseline'
-    # with open(os.path.join(data_path, 'total_result.json'), 'r') as f:
-    #     json_data = json.load(f)
-    # cm = bracket2array(json_data['cm_multiply'])
-    # visualize_cm(normalize_cm(cm), clf_name='randomforest_stack3', title=f"total_result_normalized", path='strategy_baseline')
-    # for i in range(1,14):
-    #     binary_cm = convert2binaryCM(cm, i)
-    #     visualize_cm(normalize_cm(binary_cm), clf_name='randomforest_stack3', title=f"participant_{i}_binary_normalized", path='strategy_baseline', iv=True)
-        
-    
-    # strategy 1
-    # strategy_dict = mydata.stimuli_strategy1(jspirit_data_dict, teb)
-    
-
-    # mydata.ml_test_strategy(model, strategy_dict, teb)
-    # """
-
-    # data_path = 'ml-results/latefusion/from cm/strategy1'
-    # for i in range(1,14):
-    #     with open(os.path.join(data_path, f'participant_{i}.json'), 'r') as f:
-    #         json_data = json.load(f)
-    #     cm = bracket2array(json_data['cm_multiply'])
-    #     binary_cm = convert2binaryCM(cm, i)
-    #     visualize_cm(normalize_cm(binary_cm), clf_name='randomforest_stack3', title=f"participant_{i}_binary_normalized", path='strategy1', iv=True)
-
-
-
-    # print(mydata.get_data().iloc[teb])
-    # mydata.get_data()
-
-    # x = mydata.take_x()
-    # y = mydata.take_y()
-    # mlanalysis_stacked(x,y, stack=4)
+    trb, vdb, teb = thisData.split_data(train_data_ratio, valid_data_ratio, test_data_ratio)
+    model = thisData.ml_train(trb)
+    print("train Done")
+    confusionMatrixDict, jspiritSortedDict = thisData.ml_validate(model, vdb)
+    strategy1 = thisData.stimuli_strategy1(jspiritSortedDict, teb)
+    results1 = thisData.ml_test_strategy(model, strategy1, teb)
+    print("result 1")
+    for i, participant in enumerate(results1):
+        print("====================")
+        print(participant)
+        thisConfusionMatrix = results1[participant]["cm_multiply"]
+        print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
+        print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
+        print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")
+    strategy2 = thisData.stimuli_strategy2(confusionMatrixDict, teb)
+    results2 = thisData.ml_test_strategy(model, strategy2, teb)
+    print("result 2")
+    for i, participant in enumerate(results2):
+        print("====================")
+        print(participant)
+        thisConfusionMatrix = results2[participant]["cm_multiply"]
+        print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
+        print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
+        print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")
