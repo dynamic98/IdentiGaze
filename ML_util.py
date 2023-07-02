@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score, precision_score, ConfusionMatrixDisplay
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
+from scipy.special import softmax
 from tqdm import tqdm
 import os
 import re
@@ -227,7 +228,8 @@ def latefusion(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_
 
 def latefusionVerification(clf: RandomForestClassifier, x_data, stack_index:np.array, stack_y, targetY):
     stack, total_stack_size = stack_index.shape
-    multiply_predict = []
+    binary_true = []
+    binary_score = []
     probabilities = clf.predict_proba(x_data)
     yLabel = list(set(stack_y))
 
@@ -237,20 +239,14 @@ def latefusionVerification(clf: RandomForestClassifier, x_data, stack_index:np.a
         for j in range(stack):
             this_probabilities = probabilities[stack_index[j,i]]
             multiply = multiply * np.array(this_probabilities)
-        print(multiply[0][targetY], targetY, np.argmax(multiply))
+        multiply_predict_prob = softmax(multiply[0])
+        binary_score.append(multiply_predict_prob[targetY])
+        if stack_y[i] == targetY:
+            binary_true.append(1)
+        else:
+            binary_true.append(0)
 
-    #     multiply_predict.append(yLabel[np.argmax(multiply)])
-    # cm_multiply = confusion_matrix(stack_y, multiply_predict)
-    # acc_multiply = accuracy_score(stack_y, multiply_predict)
-    # precision_multiply = precision_score(stack_y, multiply_predict, average='macro')
-    # f1_multiply = f1_score(stack_y, multiply_predict, average='macro')
-    # results = {
-    #    'cm_multiply':cm_multiply, 'acc_multiply':acc_multiply,
-    #    'precision_multiply':precision_multiply, 'f1_multiply':f1_multiply
-    # }
-
-    # return results
-
+    return binary_true, binary_score
 
 def visualize_cm(cm, clf_name:str, title:str, path='', iv=False):
     length_cm = cm.shape[0]

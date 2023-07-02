@@ -8,6 +8,7 @@ from tqdm import tqdm
 import warnings
 import json
 import math
+from scipy.fftpack import dct
 
 from SingleGazeAnalysis import MetaAnalysis
 
@@ -37,8 +38,8 @@ def slice_stimuli(df, task):
     df_event_c = df_event[df_event['Event value']=='c']
     event_b = df_event_b.index.to_list()[-1]
     event_c = df_event_c.index.to_list()[0]
-    # if task == 'task 0.7':
-    #     frame = 84
+    if task == 'task 0.7':
+        frame = 84
     # elif task == 'task 0.5':
     #     frame = 60
     # bc_stimuli = df.iloc[event_b+1:event_b+1+frame,:]
@@ -210,7 +211,7 @@ def get_gazeXY(df: pd.DataFrame):
     x_data = x_data.fillna(method='bfill')
     x_data = x_data.fillna(method='ffill')
     x_data = x_data.to_list()
-    frame = len(x_data)
+    frame = 84
     
     y_data = df[y]
     y_data = y_data.fillna(method='bfill')
@@ -286,15 +287,16 @@ def velocity(df:pd.DataFrame, task):
             nohit_velocity.append(this_velocity)
         elif (target_hit[j]==1)&(target_hit[j+1]==1):
             onhit_velocity.append(this_velocity)
+    mfcc_data = mfcc(total_velocity)
    
     total_velocity_statistic = get_list_statistic(total_velocity)
     hit_velocity_statistic = get_list_statistic(hit_velocity)
     nohit_velocity_statistic = get_list_statistic(nohit_velocity)
     onhit_velocity_statistic = get_list_statistic(onhit_velocity)
-    velocity_data = extend_list(total_velocity_statistic, hit_velocity_statistic, nohit_velocity_statistic, onhit_velocity_statistic)
+    velocity_data = extend_list(total_velocity_statistic, hit_velocity_statistic, nohit_velocity_statistic, onhit_velocity_statistic, mfcc_data)
+
     # plt.bar(list(range(len(gxlist_1))), total_velocity)
     # plt.show()
-    # hammingwindow(total_velocity)
     return velocity_data
  
 def saccade_velocity(df:pd.DataFrame, meta, task):
@@ -438,36 +440,51 @@ def rotated_path(df:pd.DataFrame, meta):
 def hammingwindow(array):
     array_length = len(array)
     frames = array*np.array([0.54-0.46*np.cos((2*np.pi*n)/(array_length -1)) for n in range(array_length)])
-    plt.subplot(2,1,1)
-    plt.bar(list(range(array_length)),array)
-    plt.subplot(2,1,2)
-    plt.bar(list(range(array_length)),frames)
-    plt.show()
+    # plt.subplot(2,1,1)
+    # plt.bar(list(range(array_length)),array)
+    # plt.subplot(2,1,2)
+    # plt.bar(list(range(array_length)),frames)
+    # plt.show()
     return frames
 
 def DFT(array, bin=512):
     dft_frames = np.fft.rfft(array, bin)
     mag_frames = np.absolute(dft_frames)
     pow_frames = ((1.0/bin)*((mag_frames)**2))
-    return dft_frames
+    return mag_frames
+    # return pow_frames
 
-# def mfcc(array, bin):
-#     nfilt = 40
-#     low_freq_mel = 0
-#     high_freq_mel = (2595 * np.log10(1 + (sample_rate / 2) / 700))  # Convert Hz to Mel
-#     mel_points = np.linspace(low_freq_mel, high_freq_mel, nfilt + 2)  # Equally spaced in Mel scale
-#     hz_points = (700 * (10**(mel_points / 2595) - 1))  # Convert Mel to Hz
-#     bin = np.floor((NFFT + 1) * hz_points / sample_rate)
 
-#     fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
-#     for m in range(1, nfilt + 1):
-#         f_m_minus = int(bin[m - 1])   # left
-#         f_m = int(bin[m])             # center
-#         f_m_plus = int(bin[m + 1])    # right
-#         for k in range(f_m_minus, f_m):
-#             fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
-#         for k in range(f_m, f_m_plus):
-#             fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
+def mfcc(array, num_ceps = 12):
+    nfilt = 40
+    NFFT = 512
+    sample_rate = 120
+    low_freq_mel = 0
+    high_freq_mel = (2595 * np.log10(1 + (sample_rate / 2) / 700))  # Convert Hz to Mel
+    mel_points = np.linspace(low_freq_mel, high_freq_mel, nfilt + 2)  # Equally spaced in Mel scale
+    hz_points = (700 * (10**(mel_points / 2595) - 1))  # Convert Mel to Hz
+    bin = np.floor((NFFT + 1) * hz_points / sample_rate)
+
+    fbank = np.zeros((nfilt, int(np.floor(NFFT / 2 + 1))))
+    for m in range(1, nfilt + 1):
+        f_m_minus = int(bin[m - 1])   # left
+        f_m = int(bin[m])             # center
+        f_m_plus = int(bin[m + 1])    # right
+        for k in range(f_m_minus, f_m):
+            fbank[m - 1, k] = (k - bin[m - 1]) / (bin[m] - bin[m - 1])
+        for k in range(f_m, f_m_plus):
+            fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
+    
+    hammedArray = hammingwindow(array)
+    frames = DFT(hammedArray, bin=NFFT)
+    filter_banks = np.dot(frames, fbank.T)
+    filter_banks = np.where(filter_banks == 0, np.finfo(float).eps, filter_banks) # Numerical Stability
+    # print(len(filter_banks))
+    # results = dct(filter_banks, type=2, axis=1, norm='ortho')[:, 1:(num_ceps+1)]
+    results = dct(filter_banks, norm='ortho')[1:(num_ceps+1)]
+    # print(results)
+    # results = dct(filter_banks, type=2, axis=1, norm='ortho')
+    return results
 
 def get_hit(df: pd.DataFrame):
     hit_col = 'hardcore_hit'
@@ -635,7 +652,7 @@ def jspirit_func(df:pd.DataFrame, meta, task):
     data_dict = get_gazeXY(df)
     hit_dict = get_hit(df)
     cnt_x, cnt_y = meta.get_cnt()
-    T = len(df)
+    T = 84
     if task == 'task 0.7':
         tick = 0.7/T
     elif task == 'task 0.5':
@@ -652,43 +669,66 @@ def jspirit_func(df:pd.DataFrame, meta, task):
         return T*tick
 
 def get_YG_data(x_data, y_data, task):
-    if task == 'task 0.7':
-        frame = 84
-    elif task == 'task 0.5':
-        frame = 60
+    # if task == 'task 0.7':
+        # frame = 84
+    # elif task == 'task 0.5':
+        # frame = 60
+    frame = 84
     xy_dict = {}
     for i in range(frame):
         xy_dict[f'new_x{i+1}'] = x_data[i]
         xy_dict[f'new_y{i+1}'] = y_data[i]
     return xy_dict
 
+
 if __name__ == '__main__':
+
+    """
+    # example_path = 'C:\\Users\\scilab\\IdentiGaze\\data\\AOI_HitScoring\\IdentiGaze_Processed Data_ver2\\chungha\\2023-03-20_14_11_59_task1\\1_hit.csv'
+    # log_path = 'C:\\Users\\scilab\\IdentiGaze\\data\\AOI_HitScoring\\IdentiGaze_data\\P8_chungha\\1 session\\task 0.5'
+    # log_json = feature_load(log_path)
+    # iter = 1
+    # task = 'task 0.5'
+    # data_df = pd.read_csv(example_path, index_col=0)
+    # meta = MetaAnalysis(log_json[f'{iter}'])
+    # task_target = meta.get_task()
+    # level = meta.get_level()
+    # cnt_x , cnt_y = meta.get_cnt()
+    # bbx_x1, bbx_y1, bbx_x2, bbx_y2 = meta.get_real_bbx()
+    # bc_stimuli = slice_stimuli(data_df, task)
+    # velocity_data = velocity(bc_stimuli, task)
+    # bc_stimuli.to_csv("bc_stimuli_example.csv")
+
+    """
     participant_dict = {'chungha': '8', 'dongik': '7', 'eunhye': '1', 'In-Taek': '5', 'jooyeong': '13', 'juchanseo': '3', 'junryeol': '11', 
                         'juyeon': '4', 'myounghun': '9', 'songmin': '10', 'sooyeon': '6', 'woojinkang': '2', 'yeogyeong': '12'}
     
     processed_datadir_path = 'data/AOI_HitScoring/IdentiGaze_Processed Data_ver2'
     logdir_path = 'data/AOI_HitScoring/IdentiGaze_Data'
     example_path = 'data/AOI_HitScoring/IdentiGaze_Processed Data/chungha'
-    whole_dataframe_task1 = pd.DataFrame()
-    whole_dataframe_task2 = pd.DataFrame()
+    # whole_dataframe_task1 = pd.DataFrame()
+    # whole_dataframe_task2 = pd.DataFrame()
+    whole_dataframe = pd.DataFrame()
     for participant in participant_dict:
         p_tasklist = sorted(os.listdir(os.path.join(processed_datadir_path, participant)))
         # p_tasklist.remove('.DS_Store')
         print(participant)
         for idx, foldername in tqdm(enumerate(p_tasklist)):
             session, task = decide_session_and_task(idx, foldername)
+            task = 'task 0.7'
             feature_log_path = os.path.join(logdir_path, f'P{participant_dict[participant]}_{participant}',session, task)
             log_json = feature_load(feature_log_path)
             for iter in range(1,101):
                 dataname = f'{iter}_hit.csv'
                 data_df = pd.read_csv(os.path.join(processed_datadir_path, participant, foldername, dataname), index_col=0)
+
                 meta = MetaAnalysis(log_json[f'{iter}'])
                 task_target = meta.get_task()
                 level = meta.get_level()
                 cnt_x , cnt_y = meta.get_cnt()
                 bbx_x1, bbx_y1, bbx_x2, bbx_y2 = meta.get_real_bbx()
                 bc_stimuli = slice_stimuli(data_df, task)
-                # print(bc_stimuli)
+
                 hit = bool_hit(bc_stimuli)
                 fft = first_fixation_time(bc_stimuli, meta, task)
                 duration_data = fixation_duration(bc_stimuli, meta, task)
@@ -715,6 +755,19 @@ if __name__ == '__main__':
                 onhit_velocity_average = velocity_data[9]
                 onhit_velocity_max = velocity_data[10]
                 onhit_velocity_min = velocity_data[11]
+                mfcc1 = velocity_data[12]
+                mfcc2 = velocity_data[13]
+                mfcc3 = velocity_data[14]
+                mfcc4 = velocity_data[15]
+                mfcc5 = velocity_data[16]
+                mfcc6 = velocity_data[17]
+                mfcc7 = velocity_data[18]
+                mfcc8 = velocity_data[19]
+                mfcc9 = velocity_data[20]
+                mfcc10 = velocity_data[21]
+                mfcc11 = velocity_data[22]
+                mfcc12 = velocity_data[23]
+
                 pupil_data = pupil(bc_stimuli)
                 pupil_average = pupil_data[0]
                 pupil_max = pupil_data[1]
@@ -756,6 +809,18 @@ if __name__ == '__main__':
                 data_dict['onhit_velocity_average'] = onhit_velocity_average
                 data_dict['onhit_velocity_max'] = onhit_velocity_max
                 data_dict['onhit_velocity_min'] = onhit_velocity_min
+                data_dict['mfcc1'] = mfcc1
+                data_dict['mfcc2'] = mfcc2
+                data_dict['mfcc3'] = mfcc3
+                data_dict['mfcc4'] = mfcc4
+                data_dict['mfcc5'] = mfcc5
+                data_dict['mfcc6'] = mfcc6
+                data_dict['mfcc7'] = mfcc7
+                data_dict['mfcc8'] = mfcc8
+                data_dict['mfcc9'] = mfcc9
+                data_dict['mfcc10'] = mfcc10
+                data_dict['mfcc11'] = mfcc11
+                data_dict['mfcc12'] = mfcc12
                 data_dict['pupil_average'] = pupil_average
                 data_dict['pupil_max'] = pupil_max
                 data_dict['pupil_min'] = pupil_min
@@ -789,15 +854,16 @@ if __name__ == '__main__':
                     data_dict['distractor_orientation'] = meta_data['distractor_orientation']
                     data_dict['target_orientation'] = meta_data['target_orientation']
                 this_df = pd.DataFrame(data_dict, index=[0])
-                if task == 'task 0.7':
-                    whole_dataframe_task2 = pd.concat([whole_dataframe_task2, this_df])
-                elif task == 'task 0.5':
-                    whole_dataframe_task1 = pd.concat([whole_dataframe_task1, this_df])
+                whole_dataframe = pd.concat([whole_dataframe, this_df])
+                # if task == 'task 0.7':
+                #     whole_dataframe_task2 = pd.concat([whole_dataframe_task2, this_df])
+                # elif task == 'task 0.5':
+                #     whole_dataframe_task1 = pd.concat([whole_dataframe_task1, this_df])
     
-    whole_dataframe_task1.to_csv('data/BlueMediumRarePupil_task1.csv', index=False)
-    whole_dataframe_task2.to_csv('data/BlueMediumRarePupil_task2.csv', index=False)
+    whole_dataframe.to_csv('data/BlueMediumRarePupilMfcc_total.csv', index=False)
+    # whole_dataframe_task2.to_csv('data/BlueMediumRarePupilMfcc_task2.csv', index=False)
 
-
+    # """
                 
             
 

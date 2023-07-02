@@ -149,9 +149,9 @@ class LoadSelectiveData:
         for participant in range(13):
             this_data = strategy_dict[participant]
             stack_index, stack_y = stack_ydata_from_anything(total_y, this_data[0], this_data[1], this_data[2])
-            results = latefusionVerification(model, total_x, stack_index, stack_y, participant)
-            totalResults[f"participant_{participant}"] = results
-        return totalResults
+            multiply_predict, multiply_predict_prob = latefusionVerification(model, total_x, stack_index, stack_y, participant)
+            # totalResults[f"participant_{participant}"] = results
+        # return totalResults
 
 
     def ml_test_baseline(self, model:RandomForestClassifier, test_data_block):
@@ -302,33 +302,50 @@ class LoadSelectiveData:
         return self.data.index.to_list()
 
 if __name__ == '__main__':
-    path = "data/BlueMediumRarePupil_task1-1.csv"
+    # path = "data/BlueMediumRarePupil_task1-1.csv"
+    path = "data/BlueMediumRarePupilMfcc_total.csv"
+    # path = "data/blue_mediumrare_data_task1.csv"
     thisData = LoadSelectiveData(path)
-    train_data_ratio = 0.6
-    valid_data_ratio = 0.2
-    test_data_ratio = 0.2
+    train_data_ratio = 0.9
+    valid_data_ratio = 0
+    test_data_ratio = 0.1
 
     trb, vdb, teb = thisData.split_data(train_data_ratio, valid_data_ratio, test_data_ratio)
     model = thisData.ml_train(trb)
     print("train Done")
-    confusionMatrixDict, jspiritSortedDict = thisData.ml_validate(model, vdb)
-    strategy1 = thisData.stimuli_strategy1(jspiritSortedDict, teb)
-    results1 = thisData.ml_test_strategy(model, strategy1, teb)
-    print("result 1")
-    for i, participant in enumerate(results1):
-        print("====================")
-        print(participant)
-        thisConfusionMatrix = results1[participant]["cm_multiply"]
-        print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
-        print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
-        print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")
-    strategy2 = thisData.stimuli_strategy2(confusionMatrixDict, teb)
-    results2 = thisData.ml_test_strategy(model, strategy2, teb)
-    print("result 2")
-    for i, participant in enumerate(results2):
-        print("====================")
-        print(participant)
-        thisConfusionMatrix = results2[participant]["cm_multiply"]
-        print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
-        print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
-        print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")
+    result = thisData.ml_test_baseline(model, teb)
+    confusionMatrix = result["cm_multiply"]
+    print(accuracyMeasurement(confusionMatrix))
+    totalFRR = []
+    totalFAR = []
+    for p in range(13):
+        print(accuracyMeasurementForVerification(confusionMatrix, p))
+        far = BiometricEvaluation(confusionMatrix, p, 'FAR')
+        frr = BiometricEvaluation(confusionMatrix, p, 'FRR')
+        print(far, frr)
+        totalFAR.append(far)
+        totalFRR.append(frr)
+        print("=======")
+    print((sum(totalFRR)/13), (sum(totalFAR)/13))
+
+    # confusionMatrixDict, jspiritSortedDict = thisData.ml_validate(model, vdb)
+    # strategy1 = thisData.stimuli_strategy1(jspiritSortedDict, teb)
+    # results1 = thisData.ml_test_strategy(model, strategy1, teb)
+    # print("result 1")
+    # for i, participant in enumerate(results1):
+    #     print("====================")
+    #     print(participant)
+    #     thisConfusionMatrix = results1[participant]["cm_multiply"]
+    #     print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
+    #     print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
+    #     print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")
+    # strategy2 = thisData.stimuli_strategy2(confusionMatrixDict, teb)
+    # results2 = thisData.ml_test_strategy(model, strategy2, teb)
+    # print("result 2")
+    # for i, participant in enumerate(results2):
+    #     print("====================")
+    #     print(participant)
+    #     thisConfusionMatrix = results2[participant]["cm_multiply"]
+    #     print(f"Accuracy for verification: {accuracyMeasurementForVerification(thisConfusionMatrix, i)}")
+    #     print(f"FAR: {BiometricEvaluation(thisConfusionMatrix, i, 'FAR')}")
+    #     print(f"FRR: {BiometricEvaluation(thisConfusionMatrix, i, 'FRR')}")

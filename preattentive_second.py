@@ -58,13 +58,12 @@ class PreattentiveObjectSecond:
             else:
                 bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
         
-        cv2.putText(bg, f"current: {self.count}/256", (100,920), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-
-        cv2.putText(bg, f"shape: {targetShape}", (100,950), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        cv2.putText(bg, f"size: {targetSize}", (100,980), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        cv2.putText(bg, f"hue: {targetHue_str}", (100,1010), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        cv2.putText(bg, f"brightness: {targetBrightness_str}", (100,1040), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        cv2.putText(bg, f"level index: {levelIndex}", (100,1070), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"current: {self.count}/256", (100,920), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"shape: {targetShape}", (100,950), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"size: {targetSize}", (100,980), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"hue: {targetHue_str}", (100,1010), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"brightness: {targetBrightness_str}", (100,1040), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        # cv2.putText(bg, f"level index: {levelIndex}", (100,1070), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
         self.count += 1
 
         # stimuli_log = {'task':'shape', 'shape_target':5, 'shape_distractor':5,
@@ -232,47 +231,67 @@ class PreattentiveObjectSecond:
     def level_combinations(self):
         return ML_util.cartesian([[1,2,3,4],[30,40,50,60],[0,1,2,3],[0,1,2,3]])
 
+def takeTargetList():
+    # Take Target List excluding the nearby elements
+    numList = list(range(16))
+    targetList = []
+    for _ in range(4):
+        thisRandom = random.choice(numList)
+        targetList.append(thisRandom)
+        numList.remove(thisRandom)
+        thisRandomLeft = thisRandom - 1
+        thisRandomRight = thisRandom + 1
+        if thisRandomLeft == -1:
+            thisRandomLeft = 15
+        if thisRandomRight == 16:
+            thisRandomRight = 0
+        if thisRandomLeft in numList:
+            numList.remove(thisRandomLeft)
+        if thisRandomRight in numList:
+            numList.remove(thisRandomRight)
+    return targetList
+
+
 if __name__ == "__main__":
     myPreattentive = PreattentiveObjectSecond(1980,1080, 'black')
 
-    cross = np.zeros((1980,1080), dtype=np.uint8)
+    cross = np.zeros((1080,1980,3), dtype=np.uint8)
     cross[int(1080/2)-30:int(1080/2)+30,int(1980/2)-5:int(1980/2)+5].fill(255)
     cross[int(1080/2)-5:int(1080/2)+5,int(1980/2)-30:int(1980/2)+30].fill(255)
 
-    black = np.zeros((100,100,3), dtype=np.uint8)
+    black = np.zeros((1080,1980,3), dtype=np.uint8)
 
+    # cv2.namedWindow('image',cv2.WND_PROP_FULLSCREEN)
     cv2.namedWindow('image')
-    cv2.moveWindow('image', 0, 0)
     cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    cv2.imshow('image', black)
-    cv2.waitKey(0)
-
+    cv2.moveWindow('image', 0, 0)
+    cv2.imshow('image', cross)
+    cv2.waitKey(0) & 0xff
 
 
     levelIndexList = list(range(256))
     random.shuffle(levelIndexList)
 
     for levelIndex in levelIndexList:
-        targetList = []
-        numList = list(range(16))
-        for _ in range(4):
-            thisRandom = random.choice(numList)
-            targetList.append(thisRandom)
-            numList.remove(thisRandom)
-            
+        targetList = takeTargetList()
+
+        cross_copy = cross.copy()
+        (textW, textH),_ = cv2.getTextSize(f"{myPreattentive.count}/256", cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+        cv2.putText(cross_copy, f"{myPreattentive.count}/256", (int(990-textW/2),620), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
         img = myPreattentive.stimuli_shape(targetList, levelIndex)
 
-        # cv2.imshow('image', cross)
-        # cv2.waitKey(0) & 0xff
+        cv2.imshow('image', cross_copy)
+        cv2.waitKey(800) & 0xff
 
-        # cv2.imshow('image', black)
-        # cv2.waitKey(200) & 0xff
+        cv2.imshow('image', black)
+        cv2.waitKey(200) & 0xff
 
         cv2.imshow('image', img)
-        cv2.waitKey(0) & 0xff
+        cv2.waitKey(700) & 0xff
 
+        cv2.imshow('image', black)
+        cv2.waitKey(300) & 0xff
 
     cv2.destroyAllWindows()
-    
     # cv2.imshow("title", img)
     # cv2.destroyAllWindows()
