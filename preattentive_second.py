@@ -35,7 +35,6 @@ class PreattentiveObjectSecond:
 
         color = (255,153,153)
         grid_list = self.calc_grid()
-        # random.shuffle(grid_list)
         bg = self.background.copy()
 
         targetShape = self.levels[levelIndex][0]
@@ -57,23 +56,67 @@ class PreattentiveObjectSecond:
                 bg= self.shape_draw(5, bg, i[0], i[1], targetSize, color)
             else:
                 bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
-        
-        # cv2.putText(bg, f"current: {self.count}/256", (100,920), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        # cv2.putText(bg, f"shape: {targetShape}", (100,950), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        # cv2.putText(bg, f"size: {targetSize}", (100,980), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        # cv2.putText(bg, f"hue: {targetHue_str}", (100,1010), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        # cv2.putText(bg, f"brightness: {targetBrightness_str}", (100,1040), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
-        # cv2.putText(bg, f"level index: {levelIndex}", (100,1070), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
         self.count += 1
-
-        # stimuli_log = {'task':'shape', 'shape_target':5, 'shape_distractor':5,
-        #             'set_size':self.set_size, 'target_cnt':(target_x, target_y), 'target_size':element_size,
-        #             'distractor_size':element_size, 'target_color':color, 'distractor_color':color, 
-        #             'target_orientation':None, 'distractor_orientation':None}
-        # return bg, stimuli_log
         return bg
 
-    
+    def stimuli_similar(self,stimuli, targetList, indexData):
+        shape_list = [1,2,3,4,5]
+        size_list = [30, 40, 50, 60, 70]
+        color_task = ['hue', 'brightness']
+        color_level = ['very low', 'low', 'mid', 'high', 'very high']
+
+        color = (255,153,153)
+        grid_list = self.calc_grid()
+        bg = self.background.copy()
+        # targetShape = self.levels[levelIndex][0]
+        # targetSize = self.levels[levelIndex][1]
+        # targetHue_str = color_level[self.levels[levelIndex][2]]
+        # targetBrightness_str = color_level[self.levels[levelIndex][3]]
+
+        # targetHue = self.convert_hue(targetHue_str)
+        # targetBrightness = self.convert_brightness(targetBrightness_str)
+        if stimuli == 'shape':
+            # print(f"indexData: {indexData}, targetList: {targetList}")
+            for n, i in enumerate(grid_list):
+                if n in targetList:
+                    index_targetList = targetList.index(n)
+                    targetShape = shape_list[indexData[index_targetList]]
+                    # print(f"n:{n}, index:{indexData[index_targetList]}, targetShape:{targetShape}")
+                    bg= self.shape_draw(targetShape, bg, i[0], i[1], 70, color)
+                else:
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
+        
+        elif stimuli == 'size':
+            for n, i in enumerate(grid_list):
+                if n in targetList:
+                    index_targetList = targetList.index(n)
+                    targetSize = size_list[indexData[index_targetList]]
+                    bg= self.shape_draw(5, bg, i[0], i[1], targetSize, color)
+                else:
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
+
+        elif stimuli == 'hue':
+            for n, i in enumerate(grid_list):
+                if n in targetList:
+                    index_targetList = targetList.index(n)
+                    targetHue = self.convert_hue(color_level[indexData[index_targetList]])
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, targetHue)
+                else:
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
+
+        elif stimuli == 'brightness':
+            for n, i in enumerate(grid_list):
+                if n in targetList:
+                    index_targetList = targetList.index(n)
+                    targetBrightness = self.convert_brightness(color_level[indexData[index_targetList]])
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, targetBrightness)
+                else:
+                    bg= self.shape_draw(5, bg, i[0], i[1], 70, color)
+
+        self.count += 1
+        return bg
+
+
     def shape_draw(self, shape, bg, x1, y1, size, color):
         if shape == 1:
             bg = self.triangle(bg, x1, y1, size, color)
