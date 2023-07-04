@@ -84,6 +84,7 @@ class Study2Task:
         self.participant = participant
         self.session = session
         self.indexList = indexList
+        self.rest = rest
         if stimuli == 'different':
             with open(os.path.join('madeSet', f'{participant}', f'session{session}', 'different_set.json')) as f:
                 indexData = json.load(f)
@@ -98,7 +99,8 @@ class Study2Task:
         bg = self.background_color.copy()
         # self.preattentive_object.random_control = False
         cv2.putText(bg, "Please focus on every odd element (shape, brightness, hue, size).", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
-        cv2.putText(bg, "Press 'z' key to start the test", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, f"Participant: {self.participant} Session :{self.session} Stimuli: {self.stimuli} Rest: {self.rest}.", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Press 'z' key to start the test", (100,500), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
         cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
         cv2.moveWindow('image', Interface_x, Interface_y)
         cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -174,7 +176,8 @@ class Study2Task:
         bg = self.background_color.copy()
         # self.preattentive_object.random_control = False
         cv2.putText(bg, "Please focus on every odd element (shape, brightness, hue, size).", (100,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
-        cv2.putText(bg, "Press 'z' key to start the test", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, f"Participant: {self.participant} Session :{self.session} Stimuli: {self.stimuli} Rest: {self.rest}.", (100,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+        cv2.putText(bg, "Press 'z' key to start the test", (100,500), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
         cv2.namedWindow('image', cv2.WND_PROP_FULLSCREEN)
         cv2.moveWindow('image', Interface_x, Interface_y)
         cv2.setWindowProperty('image', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
