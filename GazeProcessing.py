@@ -1,5 +1,4 @@
 import os
-from tkinter.filedialog import test
 import numpy as np
 import pandas as pd
 
@@ -52,6 +51,7 @@ class SingleStimuliData:
         a_list = self.slice_stimuli('a')
         b_list = self.slice_stimuli('b')
         c_list = self.slice_stimuli('c')
+
 
         if len(a_list) != 100:
             if a_list[1]<b_list[0]:

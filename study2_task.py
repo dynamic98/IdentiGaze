@@ -1,5 +1,3 @@
-from audioop import cross
-from operator import index
 import os
 import time 
 import json
@@ -86,10 +84,10 @@ class Study2Task:
         self.indexList = indexList
         self.rest = rest
         if stimuli == 'different':
-            with open(os.path.join('madeSet', f'{participant}', f'session{session}', 'different_set.json')) as f:
+            with open(os.path.join('data/madeSet', f'{participant}', f'session{session}', 'different_set.json')) as f:
                 indexData = json.load(f)
         elif stimuli == 'similar':
-            with open(os.path.join('madeSet', f'{participant}', f'session{session}', 'similar_set.json')) as f:
+            with open(os.path.join('data/madeSet', f'{participant}', f'session{session}', 'similar_set.json')) as f:
                 indexData = json.load(f)
         self.indexData = indexData
 
