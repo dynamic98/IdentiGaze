@@ -7,17 +7,16 @@ def differentSetDictionary(save=False):
     setIndex = sessionSet('different')
     originParticipant = "1"
     originSetData = loadDifferentSet(path, originParticipant)
-
-    totalSet = {k:[] for k in range(1280)}
+    totalSet = {k:{v:[] for v in range(1,41)} for k in range(1280)}
 
     for participant in range(1,41):
         targetData = loadDifferentSet(path, str(participant))
         for i in range(1280):
             matchStimuliList = retriveKeyByValue(originSetData, targetData[i])
             for matchStimuli in matchStimuliList:
-                thisSetIndex = f"{participant}_{setIndex[i]}"
-                if thisSetIndex not in totalSet[matchStimuli]:
-                    totalSet[matchStimuli].append(thisSetIndex)
+                thisSetIndex = setIndex[i]
+                if thisSetIndex not in totalSet[matchStimuli][participant]:
+                    totalSet[matchStimuli][participant].append(thisSetIndex)
     if save:
         with open("SetDictionary_Different.json", 'w') as p:
             json.dump(totalSet, p)
@@ -40,16 +39,17 @@ def similarSetDictionary(save=False):
     originParticipant = "1"
     originSetData = loadSimilarSet(path, originParticipant)
 
-    totalSet = {k:[] for k in range(980)}
+    totalSet = {k:{v:[] for v in range(1,41)} for k in range(980)}
+
 
     for participant in range(1,41):
         targetData = loadSimilarSet(path, str(participant))
         for i in range(980):
             matchStimuliList = retriveKeyByValue(originSetData, targetData[i])
             for matchStimuli in matchStimuliList:
-                thisSetIndex = f"{participant}_{setIndex[i]}"
-                if thisSetIndex not in totalSet[matchStimuli]:
-                    totalSet[matchStimuli].append(thisSetIndex)
+                thisSetIndex = setIndex[i]
+                if thisSetIndex not in totalSet[matchStimuli][participant]:
+                    totalSet[matchStimuli][participant].append(thisSetIndex)
     if save:
         with open("SetDictionary_Similar.json", 'w') as p:
             json.dump(totalSet, p)

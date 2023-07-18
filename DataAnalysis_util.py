@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from preattentive_second import PreattentiveObjectSecond
 
-class Study2Analysis:
+class Study2AnalysisIndividual:
     def __init__(self, participant, session, stimuli) -> None:
         self.participant = participant
         self.session = session
@@ -92,6 +92,145 @@ class Study2Analysis:
         
         return gazeDataFrame
 
+
+class Study2AnalysisStimuli:
+    def __init__(self, stimuli) -> None:
+        """
+        동일 stimuli를 각 participant마다 어떻게 다르게 봤는지 분석하기 위한 class
+
+        Parameters
+        ----------
+        stimuli : str
+            'different' or 'similar'를 input으로 받음
+
+        Returns
+        -------
+        void
+
+        Examples
+        --------
+        >>> Study2AnalysisStimuli("different")
+        """
+        self.stimuli = stimuli
+        self.takeSetDictionary()
+        self.preattentive_second = PreattentiveObjectSecond(1920, 1080, 'black')
+
+        # print(self.setDictionary)
+    
+    def takeSetDictionary(self):
+        # SetDictionary 데이터 불러옴. 이 데이터엔 동일 stimuli를 각 participant가 언제 봤는지 기록되어 있음
+        if self.stimuli == 'different':
+            with open('SetDictionary_Different.json', 'r') as f:
+                self.setDictionary = json.load(f)
+        elif self.stimuli == 'similar':
+            with open('SetDictionary_Similar.json', 'r') as f:
+                self.setDictionary = json.load(f)
+        else:
+            raise Exception("Stimuli should be 'different' or 'similar")
+
+    def takeBg(self, stimuliNum):
+        """
+        stimuliNum 번째 stimuli image를 가져옴
+
+        Parameters
+        ----------
+        stimuliNum : int
+            different stimuli의 경우 0~1279, similar stimuli의 경우 0~979
+
+        Returns
+        -------
+        rgb_bg : ndarray
+            stimuli의 rgb image
+
+        Examples
+        --------
+        >>> takeBg(1)
+        """
+        if self.stimuli == 'different':
+            session = stimuliNum//256+1
+            stimuliIndexNum = stimuliNum%256
+            path = os.path.join('data/madeSet', "1", f"session{session}", f"{self.stimuli}_set.json")
+            with open(path, "r") as f:
+                indexData = json.load(f)
+            levelIndex = indexData[str(stimuliIndexNum)]['level_index']
+            targetList = indexData[str(stimuliIndexNum)]['target_list']
+            bg = self.preattentive_second.stimuli_shape(targetList, levelIndex)
+
+        elif self.stimuli == 'similar':
+            session = stimuliNum//196+1
+            stimuliIndexNum = stimuliNum%196
+            path = os.path.join('data/madeSet', "1", f"session{session}", f"{self.stimuli}_set.json")
+            with open(path, "r") as f:
+                indexData = json.load(f)
+            indexData = indexData[str(stimuliIndexNum)]['index_data']
+            targetList = indexData[str(stimuliIndexNum)]['target_list']
+            visualComponent = self.indexData[str(stimuliIndexNum)]['stimuli']
+            bg = self.preattentive_second.stimuli_similar(visualComponent, targetList, indexData)
+            
+        # bg는 opencv를 통해 만든 이미지이기 때문에 BGR 컬러스케일을 가짐. matplotlib pyplot에서 imshow를 하기 위해 RGB 컬러스케일로 바꿔줌
+        rgb_bg = np.dstack((bg[:,:,2], bg[:,:,1], bg[:,:,0]))
+        return rgb_bg
+
+    def takeGaze(self, stimuliNum, participant, blockName, overlap=0):
+        """
+         participant의 StimuliNum에서 blockName 동안의 raw gaze dataframe을 가져옴
+
+        Parameters
+        ----------
+        stimuliNum : int
+            different stimuli의 경우 0~1279, similar stimuli의 경우 0~979
+        participant : int
+            1~40 사이의 participant number
+        blockName : str
+            Block1 > 십자가, Block2 > 암전, Block3 > stimuli, Block4 > 암전
+        overlap: int
+            몇몇 stimuli는 중복되어서 한 사람에게 여러번 보여준 경우가 있음. 이때 몇번째를 쓸거냐의 문제.
+            different_set의 경우 (919,1183) 번이 서로 겹침
+            similar_set의 경우 (75,851),(135,509),(158,602),(193,335),(212,679),(297,843),
+            (394,725),(531,963),(534,886),(541,823),(575,740),(662,974),(697,816) 번이 겹침
+            세번 겹친 경우는 없어서 0 또는 1의 숫자를 넣으면 됨
+
+        Returns
+        -------
+        gazeDataFrame : pd.dataframe
+            토비에서 갓 추출된 따끈따끈한 해당 블록의 raw data
+
+        Examples
+        --------
+        >>> takeGaze(919, 1, "Block3", 1)
+        """
+        savepath = "data/data_processed_Study2"
+        stimuliSet = self.setDictionary[str(stimuliNum)][str(participant)]
+        if len(stimuliSet) == 1:
+            targetStimuli = stimuliSet[0]
+        else:
+            print(f"해당 stimuli는 overlap되었음. 중복 개수는 {len(stimuliSet)}. 현재 {overlap}번째 stimuli를 가져옴")
+            targetStimuli = stimuliSet[overlap]
+        
+        session, stimuliIndexNum = targetStimuli.split("_")
+        if self.stimuli == 'different':
+            # stimuliIndexNum은 0~256 사이의 숫자. 이걸 A B + 0~128로 바꿔줘야 raw gaze path를 구할 수 있음
+            stimuliStrNum = int(stimuliIndexNum)//128
+            indexNum = int(stimuliIndexNum)%128
+            if stimuliStrNum == 0:
+                stimuliStr = 'A'
+            elif stimuliStrNum == 1:
+                stimuliStr = 'B'
+        elif self.stimuli == 'similar':
+            # stimuliIndexNum은 0~196 사이의 숫자. 이걸 A B + 0~98로 바꿔줘야 raw gaze path를 구할 수 있음
+            stimuliStrNum = int(stimuliIndexNum)//98
+            indexNum = int(stimuliIndexNum)%98
+            if stimuliStrNum == 0:
+                stimuliStr = 'A'
+            elif stimuliStrNum == 1:
+                stimuliStr = 'B'
+
+        targetPath = os.path.join(savepath, f"{participant}", f"{session}", f"{stimuliStr}", f"{indexNum}_{blockName}.tsv")
+        gazeDataFrame = pd.read_csv(targetPath, sep="\t")
+        
+        return gazeDataFrame
+
+
 def get_gazeXY(df: pd.DataFrame):
     """
     데이터프레임에서 raw gaze xy 좌표 리스트를 추출함
@@ -171,13 +310,16 @@ def gaze_plot(x_list, y_list, bg=np.array([0])):
 
 
 if __name__ == "__main__":
+
+    # 이건 Study2AnalysisIndividual 쓰는 예시
+    """
     participant = 7
     session = 3
     stimuli = "C"
 
     # 이상한놈 2_3_C_30_Block1
 
-    AnalysisExample = Study2Analysis(participant, session, stimuli)
+    AnalysisExample = Study2AnalysisIndividual(participant, session, stimuli)
     
     for stimuliNum in range(98):
         # stimuliNum = 1
@@ -187,6 +329,14 @@ if __name__ == "__main__":
         bg = AnalysisExample.takeBg(stimuliNum)
         x_list, y_list = get_gazeXY(dataFrame)
         gaze_plot(x_list, y_list, bg)
+    """
+    # 이건 Study2AnalysisStimuli 쓰는 예시
+    AnalysisExample = Study2AnalysisStimuli("different")
+    stimuliIndexNum = 500
+    for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
+        dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3")
+        bg = AnalysisExample.takeBg(stimuliIndexNum)
+        x_list, y_list = get_gazeXY(dataFrame)
+        gaze_plot(x_list, y_list, bg)
 
-    # plt.show()
 
