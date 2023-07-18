@@ -306,8 +306,62 @@ def gaze_plot(x_list, y_list, bg=np.array([0])):
     plt.annotate(str(T), (x_list[-1], y_list[-1]), color=textcolor)
     plt.show()
 
+def takeLevel_different(stimuliNum:int):
+    """
+    different stimuli에 해당하는 level을 불러옴
 
+    Parameters
+    ----------
+    stimuliNum : int
+        0~1279
 
+    Returns
+    -------
+    data[str(stimuliNum)] : dict
+        "level"은 각각 shape, size, hue, brightness\n
+        "target_list"는 이 visual component가 동글뱅이 속 어디에 위치하는지 특정\n
+        아 근데 코드 짤때 뇌를 비웠었나 shape, hue, brightness, size 순임 \n
+        hue >>> level에서 세번째 놈의 단계고, target_list에서 두번째 놈의 위치에 배치됨
+
+    Examples
+    --------
+    >>> takeLevel_different(109)
+    {"level": [4, 50, 1, 0], "target_list": [6, 13, 15, 4]}
+    """
+    path = "LevelDictionary_Different.json"
+    with open(path, 'r') as f:
+        data = json.load(f)
+    return data[str(stimuliNum)]
+
+def takeLevel_similar(stimuliNum):
+    """
+    similar stimuli에 해당하는 level을 불러옴
+
+    Parameters
+    ----------
+    stimuliNum : int
+        0~979
+
+    Returns
+    -------
+    data[str(stimuliNum)] : dict
+        "visual_component"는 shape, size, hue, brightness 중 하나. 어떤 놈인지 정해줌\n
+        "level"은 각각 그 놈들의 단계. takeLevel_different의 level이랑 다름(중요).\n
+        shape 일때 0>>>삼각형, 1>>>사각형, 2>>>오각형, 3>>>육각형\n
+        size 일때 0>>>30, 1>>>40, 2>>>50, 3>>>60\n
+        hue, brightness는 takeLevel_different랑 똑같음\n
+        "target_list"는 이 visual component가 동글뱅이 속 어디에 위치하는지 특정\n
+        이거는 코드 짤때 뇌를 제대로 쓴것 같음. 순서대로 위치함
+
+    Examples
+    --------
+    >>> takeLevel_similar(12)
+    {"visual_component": "hue", "level": [0, 3], "target_list": [7, 15]},
+    """
+    path = "LevelDictionary_Similar.json"
+    with open(path, 'r') as f:
+        data = json.load(f)
+    return data[str(stimuliNum)]
 
 if __name__ == "__main__":
 
@@ -330,13 +384,24 @@ if __name__ == "__main__":
         x_list, y_list = get_gazeXY(dataFrame)
         gaze_plot(x_list, y_list, bg)
     """
+
+    """
     # 이건 Study2AnalysisStimuli 쓰는 예시
     AnalysisExample = Study2AnalysisStimuli("different")
-    stimuliIndexNum = 500
+    stimuliIndexNum = 919
     for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
-        dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3")
-        bg = AnalysisExample.takeBg(stimuliIndexNum)
-        x_list, y_list = get_gazeXY(dataFrame)
-        gaze_plot(x_list, y_list, bg)
+        for overlap in range(2):
+            dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3", overlap)
+            bg = AnalysisExample.takeBg(stimuliIndexNum)
+            x_list, y_list = get_gazeXY(dataFrame)
+            gaze_plot(x_list, y_list, bg)
+
+    """
+    print(takeLevel_similar(180))
+    # for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
+    #     dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3")
+    #     bg = AnalysisExample.takeBg(stimuliIndexNum)
+    #     x_list, y_list = get_gazeXY(dataFrame)
+    #     gaze_plot(x_list, y_list, bg)
 
 
