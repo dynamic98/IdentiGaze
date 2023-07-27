@@ -347,15 +347,47 @@ def gaze_entropy(x_list, y_list):
     mask = cv2.ellipse(mask, (960,540), (370,370), angle=0, startAngle=315, endAngle=405, color=(4,0,0), thickness=-1)
     mask = cv2.circle(mask, (960,540), innerRadius, color=(5,0,0), thickness=-1)
 
-    transitionMatrix = np.zeros((6,6), dtype=np.float)
-    stationaryVector = np.zeros((6,), dtype=np.float)
+    transitionMatrix = np.zeros((6,6), dtype=np.float_)
+    stationaryVector = np.zeros((6,), dtype=np.float_)
+    Previous_AOI = -1
 
     for i in range(len(x_list)):
         gazeX = int(x_list[i])
         gazeY = int(y_list[i])
         thisAOI = mask[gazeY, gazeX, 0]
 
-    return None
+        if not Previous_AOI == -1:
+            # print(TotalAOI, Previous_AOI, FixationAOI)
+            transitionMatrix[Previous_AOI][thisAOI] += 1
+
+        stationaryVector[thisAOI] += 1
+        # transitionMatrix[thisAOI][thisAOI] += +1
+        Previous_AOI = thisAOI
+
+    for n, Transition_Matrix_row in enumerate(transitionMatrix):
+        if Transition_Matrix_row.sum() == 0:
+            transitionMatrix[n].fill(1/6)
+        else:
+            transitionMatrix[n] /= Transition_Matrix_row.sum()
+    stationaryVector /= stationaryVector.sum()
+
+    Hs = 0
+    for i in range(6):
+        if not stationaryVector[i] == 0:
+            Hs += stationaryVector[i]*np.log2(stationaryVector[i])
+    Hs = 0 - Hs
+    # Hs = Hs/math.log2(TotalAOI)
+
+    Ht = 0
+    for i in range(6):
+        Htt = 0
+        for j in range(6):
+            if not transitionMatrix[i][j] == 0:
+                Htt += transitionMatrix[i][j]*np.log2(transitionMatrix[i][j])
+        Ht += stationaryVector[i]*Htt
+    Ht = 0 - Ht
+
+    return Hs, Ht
 
 
 def gaze_plot(x_list, y_list, bg=np.array([0])):
@@ -510,7 +542,7 @@ if __name__ == "__main__":
         pList = list(range(1,36))
         pList.remove(16)
         print(i)
-        for participant in pList:
+        for participant in [1]:
             i = int(i)
             dataFrame = AnalysisExample.takeGaze(i, participant, "Block3")
             bg = AnalysisExample.takeBg(i)
@@ -518,8 +550,9 @@ if __name__ == "__main__":
             # gaze_angular(x_list, y_list)
             print(participant)
             fixationX, fixationY = get_fixationXY(dataFrame)
-            gaze_entropy(fixationX, fixationY)
-            gaze_plot(x_list, y_list, bg)
+            # Hs, Ht = gaze_entropy(fixationX, fixationY)
+            # print(Hs, Ht)
+            # gaze_plot(x_list, y_list, bg)
 
     # print(takeLevel_similar(180))
     # for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
