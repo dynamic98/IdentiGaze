@@ -109,10 +109,15 @@ class LoadSelectiveData:
 
 if __name__ == '__main__':
     # path = "data/BlueRareStudy2Entire_different_interpolated.csv"
-    path = "data/BlueRareStudy2_different_jyjr.csv"
+    # path = "data/BlueRareStudy2_different_jyjrGE.csv"
+    path = "data/BlueRareStudy2_different_ReactionTime_change.csv"
 
     thisData = LoadSelectiveData(path)
-    # thisData.set_domain_except('reaction_time','fixation_count','saccade_count','fixation_duration_avg','saccade_duration_avg','pupil_left','pupil_right','pupil_avg','saccade_velocity_avg','saccade_amplitude_avg','pupil_min','pupil_max','path_length','total_velocity_average','total_velocity_max','total_velocity_min','mfcc1','mfcc2','mfcc3','mfcc4','mfcc5','mfcc6','mfcc7','mfcc8','mfcc9','mfcc10','mfcc11','mfcc12','level_index','target_list_1','target_list_2','target_list_3','target_list_4')
+    # thisData.set_domain_except('Hs','Ht')
+    # thisData.set_domain_except('mfcc1','mfcc2','mfcc3','mfcc4','mfcc5','mfcc6','mfcc7','mfcc8','mfcc9','mfcc10','mfcc11','mfcc12', 'Hs', 'Ht')
+    # thisData.set_domain_except('reaction_time','fixation_count','saccade_count','fixation_duration_avg','saccade_duration_avg','pupil_left','pupil_right','pupil_avg','saccade_velocity_avg','saccade_amplitude_avg','pupil_min','pupil_max','path_length','total_velocity_average','total_velocity_max','total_velocity_min','mfcc1','mfcc2','mfcc3','mfcc4','mfcc5','mfcc6','mfcc7','mfcc8','mfcc9','mfcc10','mfcc11','mfcc12','Hs','Ht')
+    # thisData.set_domain_except('reaction_time','fixation_count','saccade_count','fixation_duration_avg','saccade_duration_avg','pupil_left','pupil_right','pupil_avg','saccade_velocity_avg','saccade_amplitude_avg','pupil_min','pupil_max','path_length','total_velocity_average','total_velocity_max','total_velocity_min','mfcc1','mfcc2','mfcc3','mfcc4','mfcc5','mfcc6','mfcc7','mfcc8','mfcc9','mfcc10','mfcc11','mfcc12','level_index','target_list_1','target_list_2','target_list_3','target_list_4','Hs','Ht')
+    # thisData.set_domain_except('reaction_time','fixation_count','saccade_count','fixation_duration_avg','saccade_duration_avg','pupil_left','pupil_right','pupil_avg','saccade_velocity_avg','saccade_amplitude_avg','pupil_min','pupil_max','path_length','total_velocity_average','total_velocity_max','total_velocity_min','level_index','target_list_1','target_list_2','target_list_3','target_list_4','Hs', 'Ht')
     dataFrame = thisData.get_data()
     # for i in range(13):
     #     print(i)

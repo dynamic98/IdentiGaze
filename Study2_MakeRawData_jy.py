@@ -44,25 +44,31 @@ def get_gazeXY(df: pd.DataFrame):
 def reaction_time(df: pd.DataFrame):
     max_reactiontime = 0.7
     total_size = df.index.size
-
+    tick = max_reactiontime/total_size
     eyetype = 'Eye movement type'
     eyeindex = 'Eye movement type index'
     fixation_df = df[df[eyetype]=='Fixation'][eyeindex]
     fixation_list = list(set(fixation_df.to_list()))
     if len(fixation_list)>=2:
-        reaction_fixation = fixation_list[1]
-        eyeindex_list = df[eyeindex].to_list()
-        eyetype_list = df[eyetype].to_list()
-        for i in range(total_size):
-            if (reaction_fixation == eyeindex_list[i]) and (eyetype_list[i]=='Fixation'):
-                reactiontime_now = i
-                break
-            else:
-                reactiontime_now = False
+        for index in range(1, len(fixation_list)):
+            reaction_fixation = fixation_list[index]
+            eyeindex_list = df[eyeindex].to_list()
+            eyetype_list = df[eyetype].to_list()
+            for i in range(total_size):
+                if (reaction_fixation == eyeindex_list[i]) and (eyetype_list[i]=='Fixation'):
+                    if i*tick<0.1:
+                        reactiontime_now = False
+                        break
+                    else:
+                        reactiontime_now = i
+                        break
+                else:
+                    reactiontime_now = False
 
-        if reactiontime_now:
-            return max_reactiontime*(reactiontime_now/total_size)
-        else:
+            if reactiontime_now:
+                return max_reactiontime*(reactiontime_now/total_size)
+
+        if not reactiontime_now:
             return max_reactiontime
     else:
         return max_reactiontime
@@ -178,8 +184,8 @@ if __name__ == '__main__':
     # whole_dataframe_task2 = pd.DataFrame()
     whole_dataframe = pd.DataFrame()
     for participant in tqdm(participant_dict):
-        print("======")
-        print(participant)
+        # print("======")
+        # print(participant)
         for session in range(1,6):
             feature_log_path = os.path.join(logdir_path, f'{participant}',f"session{session}", f"{task}_set.json")
             with open(os.path.join(feature_log_path), 'r') as f:
@@ -245,7 +251,7 @@ if __name__ == '__main__':
                 data_dict = get_gazeXY(gazeDataFrame)
 
                 path_length = get_path_length(data_dict)
-                average_velocity = path_length / 0.7
+                # average_velocity = path_length / 0.7
                 
                 
                 # feature_dict = dict()
@@ -307,5 +313,8 @@ if __name__ == '__main__':
                 # this_df = pd.DataFrame(data_dict, index=[0])
                 this_df = pd.DataFrame(data_dict, index=[0])
                 whole_dataframe = pd.concat([whole_dataframe, this_df])
-    whole_dataframe.to_csv('data/BlueRareStudy2_different_jyjrGE.csv', index=False)
+                # """
+                # this_df = pd.DataFrame(datadict, index=[0])
+                # whole_dataframe = pd.concat([whole_dataframe, this_df])
+    whole_dataframe.to_csv('data/BlueRareStudy2_different_ReactionTime_change.csv', index=False)
 
