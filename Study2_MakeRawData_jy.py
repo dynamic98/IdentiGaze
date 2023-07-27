@@ -10,6 +10,7 @@ import math
 from scipy.fftpack import dct
 from utils import feature_processing
 from metric_revised import *
+from DataAnalysis_util import gaze_entropy, get_fixationXY
 
 
 def pupil(df: pd.DataFrame):
@@ -230,6 +231,8 @@ if __name__ == '__main__':
                 pupil_max = pupil_data[1]
                 pupil_min = pupil_data[2]
 
+                Fx, Fy = get_fixationXY(gazeDataFrame)
+                Hs, Ht = gaze_entropy(Fx, Fy)
 
                 fixation_count, saccade_count, fd_list, sd_list, pd_left, pd_right, sv_list, sa_list = feature_processing(gazeDataFrame)
                 mean_fixation_duration = np.mean(fd_list)
@@ -287,6 +290,9 @@ if __name__ == '__main__':
                 data_dict['mfcc10'] = mfcc10
                 data_dict['mfcc11'] = mfcc11
                 data_dict['mfcc12'] = mfcc12
+
+                data_dict['Hs'] = Hs
+                data_dict['Ht'] = Ht
                 # data_dict['pupil_average'] = pupil_average
                 # data_dict['pupil_max'] = pupil_max
                 # data_dict['pupil_min'] = pupil_min
@@ -302,5 +308,5 @@ if __name__ == '__main__':
                 # this_df = pd.DataFrame(data_dict, index=[0])
                 this_df = pd.DataFrame(data_dict, index=[0])
                 whole_dataframe = pd.concat([whole_dataframe, this_df])
-    whole_dataframe.to_csv('data/BlueRareStudy2_different_jyjr.csv', index=False)
+    whole_dataframe.to_csv('data/BlueRareStudy2_different_jyjrGE.csv', index=False)
 
