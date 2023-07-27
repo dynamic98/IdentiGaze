@@ -109,7 +109,7 @@ class LoadSelectiveData:
 
 if __name__ == '__main__':
     # path = "data/BlueRareStudy2Entire_different_interpolated.csv"
-    path = "data/BlueRareStudy2_different_jy.csv"
+    path = "data/BlueRareStudy2_different_jyjr.csv"
 
     thisData = LoadSelectiveData(path)
     dataFrame = thisData.get_data()
