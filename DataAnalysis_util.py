@@ -550,9 +550,9 @@ if __name__ == "__main__":
             # gaze_angular(x_list, y_list)
             print(participant)
             fixationX, fixationY = get_fixationXY(dataFrame)
-            # Hs, Ht = gaze_entropy(fixationX, fixationY)
-            # print(Hs, Ht)
-            # gaze_plot(x_list, y_list, bg)
+            Hs, Ht = gaze_entropy(fixationX, fixationY)
+            print(Hs, Ht)
+            gaze_plot(x_list, y_list, bg)
 
     # print(takeLevel_similar(180))
     # for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
