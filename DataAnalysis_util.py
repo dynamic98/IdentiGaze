@@ -270,6 +270,39 @@ def get_gazeXY(df: pd.DataFrame):
     #     xy_dict[f'y{i+1}'] = y_data[i]
     return x_data, y_data
 
+def get_fixationXY(df: pd.DataFrame):
+    """
+    데이터프레임에서 raw gaze xy 좌표 리스트를 추출함
+
+    Parameters
+    ----------
+    df : DataFrame
+        토비에서 갓 추출된 따끈따끈한 해당 블록의 raw data
+
+    Returns
+    -------
+    x_data : list
+        fixation의 x 좌표 리스트
+    y_data : list
+        fixation의 y 좌표 리스트
+
+    Examples
+    --------
+    >>> get_gazeXY(myStudy2Analysis.takeGaze(1, "Block3"))
+    """
+    x = 'Fixation point X'
+    y = 'Fixation point Y'
+    x_data = df[x].dropna()
+    x_data = x_data.to_list()
+    
+    y_data = df[y].dropna()
+    y_data = y_data.to_list()
+    # xy_dict = {}
+    # for i in range(len(x_data)):
+    #     xy_dict[f'x{i+1}'] = x_data[i]
+    #     xy_dict[f'y{i+1}'] = y_data[i]
+    return x_data, y_data
+
 def gaze_angular(x_list, y_list):
 
     angle_changes = []
@@ -318,9 +351,10 @@ def gaze_entropy(x_list, y_list):
     stationaryVector = np.zeros((6,), dtype=np.float)
 
     for i in range(len(x_list)):
-        gazeX = x_list[i]
-        gazeY = y_list[i]
-        print(mask[gazeX, gazeY, 1])
+        gazeX = int(x_list[i])
+        gazeY = int(y_list[i])
+        print(gazeX, gazeY)
+        print(mask[gazeY, gazeX, 0])
 
     return None
 
@@ -484,6 +518,8 @@ if __name__ == "__main__":
             x_list, y_list = get_gazeXY(dataFrame)
             # gaze_angular(x_list, y_list)
             print(participant)
+            fixationX, fixationY = get_fixationXY(dataFrame)
+            gaze_entropy(fixationX, fixationY)
             gaze_plot(x_list, y_list, bg)
 
     # print(takeLevel_similar(180))
