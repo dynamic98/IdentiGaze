@@ -210,10 +210,11 @@ class PreattentiveObjectSecond:
         center_x = self.screen_width/2
         center_y = self.screen_height/2
         blockAngle = math.pi*22.5/180
+        biasAngle = math.pi*11.25/180
         grid_list = []
 
         for i in range(16):
-            angle = i*blockAngle
+            angle = i*blockAngle+biasAngle
             x = radius*math.cos(angle) + center_x
             y = radius*math.sin(angle) + center_y
             grid_list.append([int(x),int(y)])

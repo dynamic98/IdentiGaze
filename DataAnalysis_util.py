@@ -1,7 +1,9 @@
+from math import dist
 import os
 import numpy as np
 import pandas as pd
 import json
+import cv2
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from preattentive_second import PreattentiveObjectSecond
@@ -162,10 +164,10 @@ class Study2AnalysisStimuli:
             path = os.path.join('data/madeSet', "1", f"session{session}", f"{self.stimuli}_set.json")
             with open(path, "r") as f:
                 indexData = json.load(f)
-            indexData = indexData[str(stimuliIndexNum)]['index_data']
+            indexLevel = indexData[str(stimuliIndexNum)]['index_data']
             targetList = indexData[str(stimuliIndexNum)]['target_list']
-            visualComponent = self.indexData[str(stimuliIndexNum)]['stimuli']
-            bg = self.preattentive_second.stimuli_similar(visualComponent, targetList, indexData)
+            visualComponent = indexData[str(stimuliIndexNum)]['stimuli']
+            bg = self.preattentive_second.stimuli_similar(visualComponent, targetList, indexLevel)
             
         # bg는 opencv를 통해 만든 이미지이기 때문에 BGR 컬러스케일을 가짐. matplotlib pyplot에서 imshow를 하기 위해 RGB 컬러스케일로 바꿔줌
         rgb_bg = np.dstack((bg[:,:,2], bg[:,:,1], bg[:,:,0]))
@@ -268,6 +270,60 @@ def get_gazeXY(df: pd.DataFrame):
     #     xy_dict[f'y{i+1}'] = y_data[i]
     return x_data, y_data
 
+def gaze_angular(x_list, y_list):
+
+    angle_changes = []
+    print("=================")
+    fixations = [0]
+    for i in range(1, len(x_list) -1):
+        dx2 = x_list[i+1] - x_list[i]
+        dy2 = y_list[i+1] - y_list[i]
+        angle_now = np.arctan2(dy2, dx2)
+        
+        velocity = np.sqrt(dx2**2+dy2**2)
+        if velocity > 23:
+            if len(angle_changes) == 0:
+                angle_changes.append(angle_now)
+            else:
+                angle_past = angle_changes[-1]
+                # angle_changes.append(angle_change)
+                angle_diff = angle_now - angle_past
+                angle_diff = np.abs((angle_diff + np.pi) % (2*np.pi) - np.pi)
+                angle_changes.append(angle_now)
+
+                if angle_diff > 0.9:
+                    print("first", fixations[0])
+                    print("last", i)
+                    print(angle_diff)
+                    print("======")
+            fixations = [i]
+        else:
+            # fixation
+            fixations.append(i)
+
+    return None
+
+
+def gaze_entropy(x_list, y_list):
+
+    innerRadius = int(np.sqrt(370**2/5))
+    mask = np.zeros((1080,1920,3), dtype=np.uint8)
+    mask = cv2.ellipse(mask, (960,540), (370,370), angle=0, startAngle=45, endAngle=135, color=(1,0,0), thickness=-1)
+    mask = cv2.ellipse(mask, (960,540), (370,370), angle=0, startAngle=135, endAngle=225, color=(2,0,0), thickness=-1)
+    mask = cv2.ellipse(mask, (960,540), (370,370), angle=0, startAngle=225, endAngle=315, color=(3,0,0), thickness=-1)
+    mask = cv2.ellipse(mask, (960,540), (370,370), angle=0, startAngle=315, endAngle=405, color=(4,0,0), thickness=-1)
+    mask = cv2.circle(mask, (960,540), innerRadius, color=(5,0,0), thickness=-1)
+
+    transitionMatrix = np.zeros((6,6), dtype=np.float)
+    stationaryVector = np.zeros((6,), dtype=np.float)
+
+    for i in range(len(x_list)):
+        gazeX = x_list[i]
+        gazeY = y_list[i]
+        print(mask[gazeX, gazeY, 1])
+
+    return None
+
 
 def gaze_plot(x_list, y_list, bg=np.array([0])):
     """
@@ -302,8 +358,10 @@ def gaze_plot(x_list, y_list, bg=np.array([0])):
     # plt.axhline(1080/2,0,1, color='lightgray', linestyle='--', linewidth=1)
     # plt.axvline(1920/2,0,1, color='lightgray', linestyle='--', linewidth=1)
     plt.scatter(x_list,y_list,c=range(1,T+1), linewidth = 2, marker='o', alpha=0.5, cmap="jet", label='gaze point')
-    plt.annotate('1', (x_list[0], y_list[0]), color=textcolor)
-    plt.annotate(str(T), (x_list[-1], y_list[-1]), color=textcolor)
+    for i in range(T):
+        plt.annotate(f'{i}', (x_list[i], y_list[i]), color=textcolor)
+    # plt.annotate('1', (x_list[0], y_list[0]), color=textcolor)
+    # plt.annotate(str(T), (x_list[-1], y_list[-1]), color=textcolor)
     plt.show()
 
 def takeLevel_different(stimuliNum:int):
@@ -363,6 +421,9 @@ def takeLevel_similar(stimuliNum):
         data = json.load(f)
     return data[str(stimuliNum)]
 
+
+
+
 if __name__ == "__main__":
 
     # 이건 Study2AnalysisIndividual 쓰는 예시
@@ -388,16 +449,44 @@ if __name__ == "__main__":
     """
     # 이건 Study2AnalysisStimuli 쓰는 예시
     AnalysisExample = Study2AnalysisStimuli("different")
-    stimuliIndexNum = 919
+    # stimuliIndexNumList = [212, 287, 673, 898, 1037]
+    # stimuliIndexNumList = [96,369,679,951,1107]
+    # stimuliIndexNumList = [193, 335, 536, 865, 1101]
+    print(takeLevel_different(300))
+    stimuliIndexNumList = [300] # {"level": [1, 30, 0, 0], "target_list": [3, 6, 13, 1]} shape 3 size 1 hue 6 brightness 13
+    #  "193": {"level": [4, 60, 0, 3], "target_list": [0, 8, 11, 5]}    shape: 0, size: 5, hue: 8, brightness: 11
     for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
-        for overlap in range(2):
-            dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3", overlap)
+        print(participant)
+        for stimuliIndexNum in stimuliIndexNumList:
+            dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3")
             bg = AnalysisExample.takeBg(stimuliIndexNum)
-            x_list, y_list = get_gazeXY(dataFrame)
-            gaze_plot(x_list, y_list, bg)
+            # x_list, y_list = get_gazeXY(dataFrame)
+            # gaze_plot(x_list, y_list, bg)
+            plt.imshow(bg)
+            plt.show()
 
     """
-    print(takeLevel_similar(180))
+
+    oneList = ['6', '13', '22', '25', '44', '50', '54', '60', '75', '128', '130', '136', '158', '162', '169', '193', '196', '197', 
+                '203', '212', '222', '232', '242', '243', '282', '297', '305', '330', '331', '335', '337', '375', '394', '395', '400', 
+                '411', '423', '450', '458', '468', '484', '499', '506', '531', '534', '537', '541', '575', '588', '597', '599', '602', 
+                '606', '612', '615', '621', '662', '679', '697', '722', '725', '737', '740', '771', '804', '816', '818', '823', '843', 
+                '851', '880', '886', '889', '895', '944', '947', '949', '953', '963', '974']
+    AnalysisExample = Study2AnalysisStimuli("similar")
+    for i in oneList:
+        pList = list(range(1,36))
+        pList.remove(16)
+        print(i)
+        for participant in pList:
+            i = int(i)
+            dataFrame = AnalysisExample.takeGaze(i, participant, "Block3")
+            bg = AnalysisExample.takeBg(i)
+            x_list, y_list = get_gazeXY(dataFrame)
+            # gaze_angular(x_list, y_list)
+            print(participant)
+            gaze_plot(x_list, y_list, bg)
+
+    # print(takeLevel_similar(180))
     # for participant in [2,3,5,7,8,9,10,13,18,19,20,22,29]:
     #     dataFrame = AnalysisExample.takeGaze(stimuliIndexNum, participant, "Block3")
     #     bg = AnalysisExample.takeBg(stimuliIndexNum)

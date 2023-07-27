@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 class SingleStimuliData:
@@ -8,6 +9,8 @@ class SingleStimuliData:
         self.dataname = filename
         self.datapath = datapath
         df = pd.read_csv(os.path.join(self.datapath, filename), sep='\t', low_memory=False)
+        df['Gaze point X'] = df['Gaze point X'].interpolate()
+        df['Gaze point Y'] = df['Gaze point Y'].interpolate()
 
         self.df = df
         self.startEvent = df[df["Event value"]=='z'].index.to_list()[-1]
@@ -28,9 +31,48 @@ class SingleStimuliData:
         beforeStart = df.iloc[:self.startEvent+1]
 
         event = beforeStart[beforeStart['Event']=='KeyboardEvent']
-        print(event['Event value'])
+        eventList = event['Event value'].to_list()
 
-        # print(df[df['Event']=='KeyboardEvent']['Event value'])
+        while 'RightShift' in eventList: eventList.remove('RightShift')
+        while 'LeftShift' in eventList: eventList.remove('LeftShift')
+        while '[Shift] + RightShift' in eventList: eventList.remove('[Shift] + RightShift')
+        while '[Shift] + LeftShift' in eventList: eventList.remove('[Shift] + LeftShift')
+        while 'LeftWindowsKey' in eventList: eventList.remove('LeftWindowsKey')
+        while 'Tab' in eventList: eventList.remove('Tab')
+
+        # 프로세서 에러때매 두번씩 들어간거 제거
+        for i in range(len(eventList)-1):
+            if eventList[i]=='Return' and eventList[i+1]=='Return':
+                eventList = [eventList[i*2] for i in range(len(eventList)//2)]
+                break
+        
+        returnList = find_indices(eventList, 'Return')
+        if len(returnList)<3:
+            return '', '', '', eventList
+        else:
+            participantIndex = returnList[-3]
+            sessionIndex = returnList[-2]
+            stimuliIndex = returnList[-1]
+
+            if participantIndex > 1:
+                participant = eventList[participantIndex-2:participantIndex]
+            else:
+                participant = eventList[:participantIndex]
+            participant = ''.join(participant)
+            session = eventList[sessionIndex-1]
+            stimuli = eventList[stimuliIndex-1]
+
+            if stimuli == '[Shift] + A':
+                stimuli = 'A'
+            elif stimuli == '[Shift] + B':
+                stimuli = 'B'
+            elif stimuli == '[Shift] + C':
+                stimuli = 'C'
+            elif stimuli == '[Shift] + D':
+                stimuli = 'D'
+                
+            return participant, session, stimuli, eventList
+
 
     def saveDataFrame(self):
         totalList = self.get_stimuli_list()
@@ -120,19 +162,30 @@ def checkDirExist(filename:str, savepath:str):
     return participantNum, sessionNum, stimuliType
 
 
+def find_indices(input_list, element):
+    return [i for i, x in enumerate(input_list) if x == element]
 
 
 
 
 if __name__ == "__main__":
-    exportDataPath = "data/Data Export - IdentiGaze-Study2"
+    exportDataPath = "data/Identigaze_study2_entire data/Data Export - IdentiGaze-Study2"
     saveDataPath = "data/data_processed_Study2"
 
     # problem = 'IdentiGaze-Study2 P7_Session5_B.tsv'
     # problemDataframe = SingleStimuliData(exportDataPath, problem, saveDataPath)
     # problemDataframe.get_stimuli_list()
 
-    for i in os.listdir(exportDataPath):
+    for i in tqdm(os.listdir(exportDataPath)):
         # checkDirExist(i, saveDataPath)
         thisDataframe = SingleStimuliData(exportDataPath, i, saveDataPath)
-        thisDataframe.saveDataFrame()
+        participant, session, stimuli, eventList = thisDataframe.checkDataInfo()
+        name_p = thisDataframe.participantNum
+        name_session = thisDataframe.sessionNum
+        name_stimuli = thisDataframe.stimuliType
+        if (participant != name_p) or (session != name_session) or (stimuli != name_stimuli):
+            print("******************************")
+            print(thisDataframe.dataname)
+            print(eventList)
+            print(name_p, name_session, name_stimuli)
+            print("******************************")

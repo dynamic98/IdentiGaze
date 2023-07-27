@@ -8,6 +8,8 @@ import warnings
 import json
 import math
 from scipy.fftpack import dct
+from utils import feature_processing
+from metric_revised import *
 
 
 def pupil(df: pd.DataFrame):
@@ -160,11 +162,16 @@ def extend_list(*arg):
 
 
 if __name__ == '__main__':
-    participant_dict = {1:0,2:1,3:2,4:3,5:4,6:5,7:6,8:7,9:8,10:9,
-                        11:10,12:11,13:12,14:13,15:14,17:15,18:16,
-                        19:17,20:18,21:19,22:20,23:21,24:22,25:23,
-                        26:24,27:25,28:26,29:27,30:28,31:29,32:30,
-                        33:31,34:32,35:33}
+    # participant_dict = {2:0,3:1,5:2,7:3,8:4,9:5,10:6,13:7,18:8,19:9,20:10,22:11,29:12}
+    participant_list = list(range(1,36))
+    participant_list.remove(16)
+    participant_dict = dict()
+    for new_p, p in enumerate(participant_list):
+        participant_dict[p] = new_p+1
+
+    # participant_list = os.listdir('data/data_processed_Study2')
+    
+    print(participant_list)
     
     processed_datadir_path = 'data/data_processed_Study2'
     logdir_path = 'data/madeSet'
@@ -174,7 +181,7 @@ if __name__ == '__main__':
     # whole_dataframe_task1 = pd.DataFrame()
     # whole_dataframe_task2 = pd.DataFrame()
     whole_dataframe = pd.DataFrame()
-    for participant in participant_dict:
+    for participant in tqdm(participant_dict):
         print("======")
         print(participant)
         for session in range(1,6):
@@ -223,8 +230,48 @@ if __name__ == '__main__':
                 pupil_max = pupil_data[1]
                 pupil_min = pupil_data[2]
 
+
+                fixation_count, saccade_count, fd_list, sd_list, pd_left, pd_right, sv_list, sa_list = feature_processing(gazeDataFrame)
+                mean_fixation_duration = np.mean(fd_list)
+                mean_saccade_duration = np.mean(sd_list)
+                pd_left = pd_left[0]
+                pd_right = pd_right[0]
+                pd_mean = np.mean([pd_left, pd_right])
+                mean_saccade_velocity = np.mean(sv_list)
+                mean_saccade_amplitude = np.mean(sa_list)
+
+
+
+                # print(fixation_count, saccade_count, fd_list, sd_list, pd_left, pd_right, sv_list, sa_list)
                 data_dict = get_gazeXY(gazeDataFrame)
+
+                path_length = get_path_length(data_dict)
+                average_velocity = path_length / 0.7
+                
+                
+                # feature_dict = dict()
+                data_dict['participant'] = participant_dict[participant]
+                # data_dict['participant'] = participant
+                
+
+
+
                 data_dict['reaction_time'] = rt
+                data_dict['fixation_count'] = fixation_count
+                data_dict['saccade_count'] = saccade_count
+                data_dict['fixation_duration_avg'] = mean_fixation_duration
+                data_dict['saccade_duration_avg'] = mean_saccade_duration
+                data_dict['pupil_left'] = pd_left
+                data_dict['pupil_right'] = pd_right
+                data_dict['pupil_avg'] = pd_mean
+                data_dict['saccade_velocity_avg'] = mean_saccade_velocity
+                data_dict['saccade_amplitude_avg'] = mean_saccade_amplitude
+                data_dict['pupil_min'] = pupil_min
+                data_dict['pupil_max'] = pupil_max
+                data_dict['path_length'] = path_length
+                # data_dict['average_velocity'] = average_velocity
+
+
                 data_dict['total_velocity_average'] = total_velocity_average
                 data_dict['total_velocity_max'] = total_velocity_max
                 data_dict['total_velocity_min'] = total_velocity_min
@@ -240,17 +287,20 @@ if __name__ == '__main__':
                 data_dict['mfcc10'] = mfcc10
                 data_dict['mfcc11'] = mfcc11
                 data_dict['mfcc12'] = mfcc12
-                data_dict['pupil_average'] = pupil_average
-                data_dict['pupil_max'] = pupil_max
-                data_dict['pupil_min'] = pupil_min
-                data_dict['participant'] = int(participant_dict[participant])
+                # data_dict['pupil_average'] = pupil_average
+                # data_dict['pupil_max'] = pupil_max
+                # data_dict['pupil_min'] = pupil_min
+                # data_dict['participant'] = int(participant_dict[participant])
                 data_dict['level_index'] = levelIndex
                 data_dict['target_list_1'] = target_list[0]
                 data_dict['target_list_2'] = target_list[1]
                 data_dict['target_list_3'] = target_list[2]
                 data_dict['target_list_4'] = target_list[3]
+
+
+
+                # this_df = pd.DataFrame(data_dict, index=[0])
                 this_df = pd.DataFrame(data_dict, index=[0])
                 whole_dataframe = pd.concat([whole_dataframe, this_df])
-
-    whole_dataframe.to_csv('data/BlueRareStudy2Entire_different_interpolated.csv', index=False)
+    whole_dataframe.to_csv('data/BlueRareStudy2_different_jyjr.csv', index=False)
 
