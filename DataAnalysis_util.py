@@ -354,6 +354,14 @@ def gaze_entropy(x_list, y_list):
     for i in range(len(x_list)):
         gazeX = int(x_list[i])
         gazeY = int(y_list[i])
+        if gazeY < 0: 
+            gazeY = 0
+        if gazeY >= 1080:
+            gazeY = 1079
+        if gazeX < 0:
+            gazeX = 0
+        if gazeX >= 1920:
+            gazeX = 1919
         thisAOI = mask[gazeY, gazeX, 0]
 
         if not Previous_AOI == -1:
