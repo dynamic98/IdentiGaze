@@ -353,8 +353,7 @@ def gaze_entropy(x_list, y_list):
     for i in range(len(x_list)):
         gazeX = int(x_list[i])
         gazeY = int(y_list[i])
-        print(gazeX, gazeY)
-        print(mask[gazeY, gazeX, 0])
+        thisAOI = mask[gazeY, gazeX, 0]
 
     return None
 
