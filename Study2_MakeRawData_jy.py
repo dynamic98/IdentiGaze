@@ -10,11 +10,7 @@ import math
 from scipy.fftpack import dct
 from utils import feature_processing
 from metric_revised import *
-<<<<<<< HEAD
 from DataAnalysis_util import get_fixationXY, gaze_entropy
-=======
-from DataAnalysis_util import gaze_entropy, get_fixationXY
->>>>>>> refs/remotes/origin/main
 
 
 def pupil(df: pd.DataFrame):
