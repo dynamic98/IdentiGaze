@@ -118,6 +118,7 @@ class ProtoTypeTask:
                     key = cv2.waitKey(60) & 0xff
                     time_passed = time.time() - start_time
                     if time_passed > self.stimuli_time:
+                        print(time_passed)
                         keyboard_C_btn()
                         self.ready = 0
                         task_count += 1
