@@ -110,7 +110,8 @@ class LoadSelectiveData:
 if __name__ == '__main__':
     # path = "data/BlueRareStudy2Entire_different_interpolated.csv"
     # path = "data/BlueRareStudy2_different_jyjrGE.csv"
-    path = "data/BlueRareStudy2_different_ReactionTime_change.csv"
+    # path = "data/BlueRareStudy2_different_ReactionTime_change.csv"
+    path = "data/Result1/Similar_All.csv"
 
     thisData = LoadSelectiveData(path)
     # thisData.set_domain_except('Hs','Ht')

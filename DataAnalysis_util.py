@@ -1,4 +1,3 @@
-from math import dist
 import os
 import numpy as np
 import pandas as pd
@@ -239,19 +238,39 @@ class Study2AnalysisStimuli:
     
     def findVC_from_Similar(self, visual_component:str, level:int):
         if self.stimuli == 'different':
-            raise Exception("This Function is only used for similar stimuli")
-        
-        matchedStimuliList = []
-        for i in self.LevelDictionary:
-            stimuliInfo = self.LevelDictionary[i]
-            if stimuliInfo['visual_component'] == visual_component and level in stimuliInfo['level']:
-                matchedStimuliList.append(int(i))
-        return matchedStimuliList
+            # raise Exception("This Function is only used for similar stimuli")
+            matchedStimuliList = []
+            for i in self.LevelDictionary:
+                stimuliInfo = self.LevelDictionary[i]
+        elif self.stimuli == 'similar':
+            matchedStimuliList = []
+            for i in self.LevelDictionary:
+                stimuliInfo = self.LevelDictionary[i]
+                if stimuliInfo['visual_component'] == visual_component and level in stimuliInfo['level']:
+                    matchedStimuliList.append(int(i))
+            return matchedStimuliList
 
     def targetDistance(self, stimuliIndex, visual_component, level, gazeX, gazeY):
         gazeSize = len(gazeX)
-        
-        pass
+        gridList = self.preattentive_second.calc_grid()
+        distanceList = []
+        stimuliInfo = self.LevelDictionary[str(stimuliIndex)]
+        if self.stimuli == 'different':
+            pass
+        elif self.stimuli == 'similar':
+            if stimuliInfo['visual_component'] != visual_component:
+                raise Exception("Your visual component is not matched your stimuli index")
+            levelIndices = find_indices(stimuliInfo['level'], level)
+            targetList = [stimuliInfo['target_list'][i] for i in levelIndices]
+            targetCoordinates = [gridList[i] for i in targetList]
+            for i in range(gazeSize):
+                thisGaze =  [gazeX[i], gazeY[i]]
+                distanceTemp = []
+                for j in targetCoordinates:
+                    distanceTemp.append(dist(thisGaze, j))
+                distanceList.append(min(distanceTemp))
+            
+            return distanceList
 
 
 def get_gazeXY(df: pd.DataFrame):
@@ -515,7 +534,14 @@ def takeLevel_similar(stimuliNum):
         data = json.load(f)
     return data[str(stimuliNum)]
 
+def find_indices(input_list, element):
+    return [i for i, x in enumerate(input_list) if x == element]
 
+def dist(p:list, q:list):
+    tempSum = 0
+    for i in range(len(p)):
+        tempSum = tempSum + (p[i]-q[i])**2
+    return np.sqrt(tempSum)
 
 
 if __name__ == "__main__":
